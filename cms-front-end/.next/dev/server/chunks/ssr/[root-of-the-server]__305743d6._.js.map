@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///home/vit/Documents/CMS/cms-front-end/src/app/page.tsx"],"sourcesContent":["import Link from \"next/link\";\nimport Navbar from \"../components/layout/navbar\";\nimport home from \"../components/ui/home\";\n\nexport default function Home() {\n  return (\n    <main>\n      <>\n      NavBar\n      home\n      \n      </>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAIe,SAAS;IACtB,qBACE,8OAAC;kBACC,cAAA;sBAAE;;;;;;;AAOR"}}]
-}

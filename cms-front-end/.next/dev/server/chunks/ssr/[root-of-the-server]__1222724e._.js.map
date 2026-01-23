@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///home/vit/Documents/CMS/cms-front-end/app/page.tsx"],"sourcesContent":["import Link from \"next/link\";\nimport Navbar from \"../components/layout/navbar\";\n\nexport default function Home() {\n  return (\n    <main>\n      <Navbar />\n      <h1>Welcome to My Next.js App</h1>\n      <h1 className=\"text-3xl font-bold underline\">\n        <a href=\"https://daradevit.site\">Welcome to My Next.js App</a>\n      </h1>\n    </main>\n  );\n}\n"],"names":[],"mappings":";;;;;;;;;;;;AAGe,SAAS;IACtB,qBACE,8OAAC;;0BACC,8OAAC;;;;;0BACD,8OAAC;0BAAG;;;;;;0BACJ,8OAAC;gBAAG,WAAU;0BACZ,cAAA,8OAAC;oBAAE,MAAK;8BAAyB;;;;;;;;;;;;;;;;;AAIzC"}}]
-}
