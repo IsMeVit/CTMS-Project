@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
       <Background />
       <nav className="relative z-30 flex items-center justify-between px-12 py-8 text-white bg-transparent w-full border-b border-white/10">
         <div className="text-xl font-black tracking-[0.3em] uppercase">
-          <a href="/" className="hover:opacity-70 transition-opacity">
+          <a href="/home" className="hover:opacity-70 transition-opacity">
             CINEMATIC DREAMS
           </a>
         </div>
@@ -30,7 +30,7 @@ const Navbar: React.FC = () => {
               <li key={link.name}>
                 <a
                   href={link.path}
-                  className="text-[11px] font-bold tracking-[0.2em] text-gray-300 hover:text-white transition-colors uppercase"
+                  className="text-[11px] font-bold tracking-[0.2em] text-gray-300 hover:text-white hover:underline transition-colors uppercase"
                 >
                   {link.name}
                 </a>
@@ -38,10 +38,8 @@ const Navbar: React.FC = () => {
             ))}
           </ul>
 
-          {/* Vertical Separator: Fixed the width and opacity */}
           <span className="h-4 w-px bg-white/20" aria-hidden="true" />
 
-          {/* Login Button: Styled to match modern "pill" or "sharp" cinema buttons */}
           <a
             href="/login"
             className="text-[11px] tracking-widest uppercase font-bold px-6 py-2 border border-white/30 rounded-full hover:bg-white hover:text-black transition-all duration-300"

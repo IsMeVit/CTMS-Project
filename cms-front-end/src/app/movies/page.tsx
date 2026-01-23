@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React from "react";
 import Background from "@/src/components/layout/background";
 import { motion } from "framer-motion";
+import Navbar from "@/src/components/layout/navbar";
 
 interface Movie {
   id: number;
@@ -53,7 +53,8 @@ export default function MoviesPage() {
   const router = useRouter();
 
   return (
-    <div className="relative min-h-screen bg-black">
+    <div className="relative min-h-screen">
+      <Navbar />
       <Background />
 
       <main className="relative z-10 px-6 md:px-16 py-14 text-white">

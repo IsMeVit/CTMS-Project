@@ -95,7 +95,7 @@ module.exports = mod;
 
 __turbopack_context__.s([
     "default",
-    ()=>__TURBOPACK__default__export__
+    ()=>Home
 ]);
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$background$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/components/layout/background.tsx [app-ssr] (ecmascript)");
@@ -104,23 +104,23 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navi
 ;
 ;
 ;
-const HomeContent = ()=>{
+function Home() {
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRouter"])();
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
         className: "relative h-[90vh] w-full flex items-center justify-center overflow-hidden text-white",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$layout$2f$background$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/components/ui/home.tsx",
-                lineNumber: 14,
-                columnNumber: 7
-            }, ("TURBOPACK compile-time value", void 0)),
+                lineNumber: 12,
+                columnNumber: 9
+            }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent z-0"
             }, void 0, false, {
                 fileName: "[project]/src/components/ui/home.tsx",
-                lineNumber: 17,
-                columnNumber: 7
-            }, ("TURBOPACK compile-time value", void 0)),
+                lineNumber: 14,
+                columnNumber: 9
+            }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "relative z-10 text-center px-6 max-w-4xl",
                 children: [
@@ -134,25 +134,25 @@ const HomeContent = ()=>{
                                 children: "Movies"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ui/home.tsx",
-                                lineNumber: 23,
-                                columnNumber: 11
-                            }, ("TURBOPACK compile-time value", void 0)),
+                                lineNumber: 19,
+                                columnNumber: 13
+                            }, this),
                             " ",
                             "& TV Shows"
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/ui/home.tsx",
-                        lineNumber: 21,
-                        columnNumber: 9
-                    }, ("TURBOPACK compile-time value", void 0)),
+                        lineNumber: 17,
+                        columnNumber: 11
+                    }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                         className: "text-lg md:text-xl text-gray-300 mb-10 leading-relaxed",
                         children: "Watch anywhere. Cancel anytime. Ready for your next adventure? Book your seats now and experience cinema like never before."
                     }, void 0, false, {
                         fileName: "[project]/src/components/ui/home.tsx",
-                        lineNumber: 29,
-                        columnNumber: 9
-                    }, ("TURBOPACK compile-time value", void 0)),
+                        lineNumber: 25,
+                        columnNumber: 11
+                    }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "flex flex-col sm:flex-row gap-5 justify-center",
                         children: [
@@ -162,44 +162,43 @@ const HomeContent = ()=>{
                                 children: "🎟 Get Started"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ui/home.tsx",
-                                lineNumber: 36,
-                                columnNumber: 11
-                            }, ("TURBOPACK compile-time value", void 0)),
+                                lineNumber: 32,
+                                columnNumber: 13
+                            }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                 className: "bg-white/10 hover:bg-white/20 backdrop-blur-md px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-300 border border-white/20",
                                 children: "🎬 View Schedule"
                             }, void 0, false, {
                                 fileName: "[project]/src/components/ui/home.tsx",
-                                lineNumber: 42,
-                                columnNumber: 11
-                            }, ("TURBOPACK compile-time value", void 0))
+                                lineNumber: 38,
+                                columnNumber: 13
+                            }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/components/ui/home.tsx",
-                        lineNumber: 35,
-                        columnNumber: 9
-                    }, ("TURBOPACK compile-time value", void 0))
+                        lineNumber: 31,
+                        columnNumber: 11
+                    }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/ui/home.tsx",
-                lineNumber: 20,
-                columnNumber: 7
-            }, ("TURBOPACK compile-time value", void 0)),
+                lineNumber: 16,
+                columnNumber: 9
+            }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "absolute bottom-0 left-0 w-full h-32 bg-linear-to-t from-black to-transparent"
             }, void 0, false, {
                 fileName: "[project]/src/components/ui/home.tsx",
-                lineNumber: 49,
-                columnNumber: 7
-            }, ("TURBOPACK compile-time value", void 0))
+                lineNumber: 44,
+                columnNumber: 9
+            }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/ui/home.tsx",
-        lineNumber: 11,
-        columnNumber: 5
-    }, ("TURBOPACK compile-time value", void 0));
-};
-const __TURBOPACK__default__export__ = HomeContent;
+        lineNumber: 10,
+        columnNumber: 7
+    }, this);
+}
 }),
 "[project]/node_modules/next/dist/server/route-modules/app-page/module.compiled.js [app-ssr] (ecmascript)", ((__turbopack_context__, module, exports) => {
 "use strict";

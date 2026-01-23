@@ -1,5 +1,5 @@
 import Navbar from "../components/layout/navbar";
-import Home from "../components/ui/home"; // Renamed for clarity
+import Home from "../components/ui/home";
 
 export default function HomePage() {
   return (
