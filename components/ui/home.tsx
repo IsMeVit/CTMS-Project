@@ -1,17 +1,13 @@
 "use client"
 
-import Background from "../layout/background"
 import { useRouter } from "next/navigation"
 
 export default function Home() {
 
     const router = useRouter()
     return (
-      <section className="relative h-[90vh] w-full flex items-center justify-center overflow-hidden text-white">
-        
-        <Background />
-
-        <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent z-0" />
+      <section className="relative h-[90vh] min-h-screen w-full flex items-center justify-center overflow-hidden text-white">
+        <div className="absolute inset-0 bg-linear-to-t to-transparent z-0" />
 
         <div className="relative z-10 text-center px-6 max-w-4xl">
           <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight leading-tight">
@@ -41,7 +37,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 w-full h-32 bg-linear-to-t from-black to-transparent" />
       </section>
     )
   }

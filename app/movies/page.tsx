@@ -1,9 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Background from "@/components/layout/background";
 import { motion } from "framer-motion";
-import Navbar from "@/components/layout/navbar";
 
 interface Movie {
   id: number;
@@ -48,10 +46,7 @@ export default function MoviesPage() {
   const router = useRouter();
 
   return (
-    <div className="relative min-h-screen bg-black">
-      <Navbar />
-      <Background />
-
+    <div className="relative min-h-screen ">
       <main className="relative z-10 px-6 md:px-16 py-14 text-white">
         <header className="mb-14">
           <h1 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">
@@ -96,7 +91,6 @@ export default function MoviesPage() {
                 </div>
               </div>
 
-              {/* Text Info */}
               <div className="p-6">
                 <h2 className="font-black text-xl uppercase tracking-tight group-hover:text-red-500 transition-colors">
                   {movie.title}

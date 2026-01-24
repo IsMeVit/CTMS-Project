@@ -20,7 +20,7 @@ const Navbar: React.FC = () => {
       <nav className="relative z-30 flex items-center justify-between px-12 py-8 text-white bg-transparent w-full border-b border-white/10">
         <div className="text-3xl font-black tracking-[0.3em] uppercase">
           <a href="/home" className="hover:opacity-70 transition-opacity">
-            ONLYFLEX
+            ONLY<span className="text-red-600">FLEX</span>
           </a>
         </div>
 
