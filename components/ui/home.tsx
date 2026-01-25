@@ -26,7 +26,6 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center">
             <button 
-              onClick={() => router.push('/movies')}
               className="bg-red-600 hover:bg-red-700 px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-red-600/30">
               🎟 Get Started
             </button>
