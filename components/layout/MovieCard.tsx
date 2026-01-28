@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation"; // 1. Import router
+import { useRouter } from "next/navigation"; 
 import { motion } from "framer-motion";
 
 interface Movie {
@@ -17,7 +17,7 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ movie, onClose }: MovieCardProps) {
-  const router = useRouter(); // 2. Initialize router
+  const router = useRouter(); 
 
   const handleBooking = () => {
     router.push(`/booking?movie=${encodeURIComponent(movie.title)}`);

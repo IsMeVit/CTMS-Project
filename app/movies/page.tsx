@@ -23,7 +23,7 @@ export default function MoviesPage() {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   return (
-    <div className="relative min-h-screen text-white font-sans overflow-x-hidden">
+    <div className="relative md:min-h-screen text-white font-sans overflow-x-hidden">
       <main className="relative z-10 px-6 md:px-16 py-14">
         <header className="mb-14">
           <h2 className="text-xl md:text-4xl uppercase font-bold tracking-tight">Trending Now</h2>
