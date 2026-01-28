@@ -1,0 +1,20 @@
+services:
+  ctms-app:
+    build: .
+    container_name: ctms-development
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the current directory for hot reloading
+      - .:/app
+      # Preserve node_modules between container runs
+      - /app/node_modules
+      # Preserve .next build files
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+    # Keep the container running for interactive debugging
+    stdin_open: true
+    tty: true
