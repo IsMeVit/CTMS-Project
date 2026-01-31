@@ -7,7 +7,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import Toggle from '@/components/ui/Toggle';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
-import { User, Bell, Calendar, Trash2, Globe } from 'lucide-react';
+import { User, Bell, Trash2, Globe } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   const { user } = useAuth();
@@ -107,12 +107,6 @@ const SettingsPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [settings.timezone, settings.timeFormat]);
 
-
-  const seatOptions = [
-    { value: 'window', label: 'Window' },
-    { value: 'center', label: 'Center' },
-    { value: 'aisle', label: 'Aisle' },
-  ];
 
   const handleSaveProfile = () => {
     console.log('Saving profile:', editForm);
