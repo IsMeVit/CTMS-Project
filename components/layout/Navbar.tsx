@@ -1,34 +1,46 @@
 "use client";
-
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Background from './Background';
-import { Menu, X } from 'lucide-react';
-
+import { Menu, X, LogOut, UserCircle, Settings, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 interface NavLink {
   name: string;
   path: string;
 }
-
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const { user, logout, isAuthenticated } = useAuth();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
   const navLinks: NavLink[] = [
     { name: 'HOME', path: '/home' },
     { name: 'MOVIES', path: '/movies' },
     { name: 'ABOUT US', path: '/about' },
   ];
-
   return (
-    <main>
+    <>
       <Background />
       <nav className="relative z-30 flex items-center justify-between px-6 md:px-12 py-8 text-white bg-transparent w-full border-b border-white/10">
         <div className="text-2xl md:text-3xl font-black tracking-[0.3em] uppercase shrink-0">
           <a href="/home" className="hover:opacity-70 transition-opacity">
-            ONLY<span className="text-red-600">FLEX</span>
+            ONLY<span className="text-red-600">FLIX</span>
           </a>
         </div>
-
-        <div className="hidden md:flex items-center gap-10">
+        <div className="hidden md:flex items-center gap-8">
           <ul className="flex items-center gap-8">
             {navLinks.map((link) => (
               <li key={link.name}>
@@ -41,53 +53,126 @@ const Navbar: React.FC = () => {
               </li>
             ))}
           </ul>
+          
           <span className="h-4 w-px bg-white/20" aria-hidden="true" />
-          <a
-            href="/login"
-            className="text-[11px] tracking-widest uppercase font-bold px-6 py-2 border border-white/30 rounded-full hover:bg-white hover:text-black transition-all"
-          >
-            Login
-          </a>
+          
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+                  aria-expanded={isProfileDropdownOpen}
+                  aria-haspopup="true"
+                >
+                  <UserCircle size={16} />
+                  <span className="text-sm text-gray-300">
+                    {user?.name}
+                  </span>
+                  <ChevronDown size={12} className={`transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isProfileDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="p-2">
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <UserCircle size={16} />
+                        <span className="text-gray-700">My Profile</span>
+                      </Link>
+                      <Link
+                        href="/settings"
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      >
+                        <Settings size={16} />
+                        <span className="text-gray-700">Settings</span>
+                      </Link>
+                      <div className="border-t border-gray-200 my-2" />
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsProfileDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <LogOut size={16} />
+                        <span className="font-medium">Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <a
+              href="/login"
+              className="text-[11px] tracking-widest uppercase font-bold px-6 py-2 border border-white/30 rounded-full hover:bg-white hover:text-black transition-all"
+            >
+              Login
+            </a>
+          )}
         </div>
-
-            {/* Mobile sidebar toggle button */}
         <button 
-          className="md:hidden z-50 p-2 "
+          className="md:hidden z-50 p-2 text-gray-500 hover:text-white"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
-        <div className={`fixed top-0 right-0 h-full w-64 bg-black/95 backdrop-blur-lg z-40 transform transition-transform duration-300 ease-in-out border-l border-white/10 ${isOpen ? 'translate-x-0' : 'translate-x-full'} md:hidden`}>
-          <div className="flex flex-col h-full pt-24 px-8 gap-8">
-            {navLinks.map((link) => (
-              <a
-                key={link.name}
-                href={link.path}
-                onClick={() => setIsOpen(false)}
-                className="text-lg font-bold tracking-widest text-gray-300 hover:text-red-600 transition-colors"
-              >
-                {link.name}
-              </a>
-            ))}
-            <hr className="border-white/10" />
-            <a
-              href="/login"
-              className="text-center py-3 border border-white/30 rounded-full font-bold tracking-widest hover:bg-white hover:text-black transition-all"
-            >
-              LOGIN
-            </a>
-          </div>
-        </div>
-
-        {isOpen && (
+      </nav>
+      {isOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
           <div 
-            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
-        )}
-      </nav>
-    </main>
+          <div className="absolute right-0 top-0 h-full w-64 bg-black/95 backdrop-blur-lg border-l border-white/10">
+            <div className="flex flex-col h-full pt-24 px-6 gap-4">
+              {navLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.path}
+                  onClick={() => setIsOpen(false)}
+                  className="text-lg font-bold tracking-widest text-gray-300 hover:text-red-600 transition-colors"
+                >
+                  {link.name}
+                </a>
+              ))}
+              
+              <hr className="border-white/10" />
+              
+              {isAuthenticated ? (
+                <>
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <UserCircle size={16} />
+                    <span className="text-sm font-bold">{user?.name}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsOpen(false);
+                    }}
+                    className="text-lg font-bold tracking-widest text-red-600 hover:text-red-500 transition-colors text-left"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <a
+                  href="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="text-lg font-bold tracking-widest text-gray-300 hover:text-red-600 transition-colors"
+                >
+                  Login
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
-
 export default Navbar;

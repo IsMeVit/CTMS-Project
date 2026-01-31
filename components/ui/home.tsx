@@ -1,10 +1,24 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function Home() {
-
-    const router = useRouter()
+    const router = useRouter();
+    const { isAuthenticated } = useAuth();
+    
+    const handleGetStarted = () => {
+      if (isAuthenticated) {
+        router.push('/movies');
+      } else {
+        router.push('/signup');
+      }
+    };
+    
+    const handleViewSchedule = () => {
+      router.push('/movies');
+    };
+    
     return (
       <section className="relative h-[90vh] min-h-screen w-full flex items-center justify-center overflow-hidden text-white">
         <div className="absolute inset-0 bg-linear-to-t to-transparent z-0" />
@@ -26,11 +40,14 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center">
             <button 
+              onClick={handleGetStarted}
               className="bg-red-600 hover:bg-red-700 px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-lg shadow-red-600/30">
               🎟 Get Started
             </button>
 
-            <button className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-300 border border-white/20">
+            <button 
+              onClick={handleViewSchedule}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-md px-10 py-4 rounded-xl font-semibold text-lg transition-all duration-300 border border-white/20">
               🎬 View Schedule
             </button>
           </div>

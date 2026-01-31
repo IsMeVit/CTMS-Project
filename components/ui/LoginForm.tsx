@@ -2,48 +2,40 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { login, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
 
     if (!email || !password) {
       setError("Please fill in all fields");
-      setIsLoading(false);
       return;
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      if (email === "superAdmin@168.com" && password === "123123") {
-        if (rememberMe) {
-          localStorage.setItem("authToken", "mock-token");
-        }
-
+      const success = await login(email, password);
+      
+      if (success) {
         router.push("/home");
       } else {
         setError("Invalid email or password");
       }
     } catch {
       setError("Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-8 border border-white/10 shadow-2xl">
+    <div className="backdrop-blur-lg rounded-2xl p-8 border border-white/10 shadow-2xl">
       <h1 className="text-3xl font-bold mb-8 text-center bg-linear-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">
         Welcome Back
       </h1>
@@ -96,15 +88,9 @@ export default function LoginForm() {
         </div>
 
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-white/20 bg-black/50 focus:ring-red-600 focus:ring-2"
-            />
-            <span className="text-sm">Remember me</span>
-          </label>
+          <span className="text-sm text-gray-400">
+            Your session will be remembered
+          </span>
           <a href="/forgot-password" className="text-sm text-red-500 hover:text-red-400">
             Forgot password?
           </a>

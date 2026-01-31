@@ -16,12 +16,12 @@ const CinematicBackground: React.FC = () => {
           }}
         />
         
-        <div className="absolute inset-0 bg-linear-to-t from-[#050505] via-[#050505]/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/80 to-transparent" />
         <div className="absolute inset-0 bg-linear-to-b from-[#050505]/40 via-transparent to-[#050505]" />
         <div className="absolute inset-0 bg-linear-to-r from-[#050505] via-transparent to-transparent" />
         
         <div className="absolute inset-0 shadow-[inset_0_0_150px_rgba(0,0,0,0.9)]" />
-        <div className="absolute bottom-0 left-0 w-full h-32 bg-linear-to-t from-black to-transparent" />
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-black to-transparent" />
       </div>
 
       <style jsx global>{`

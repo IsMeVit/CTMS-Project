@@ -4,19 +4,51 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MovieCard from "@/components/layout/MovieCard";
 
+const Image = motion.img;
+
+interface Showtime {
+  id: string;
+  time: string;
+  date: string;
+  available: number;
+}
+
 interface Movie {
   id: number;
   title: string;
   genre: string;
   duration: string;
   poster: string;
+  showtimes?: Showtime[];
 }
 
+const generateMovieShowtimes = (movieId: number): Showtime[] => {
+  const showtimes: Showtime[] = [];
+  const times = ['10:00', '13:00', '16:00', '19:00', '22:00'];
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() + i);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    times.forEach(time => {
+      showtimes.push({
+        id: `${movieId}-${dateStr}-${time}`,
+        time,
+        date: dateStr,
+        available: Math.floor(Math.random() * 50) + 10
+      });
+    });
+  }
+  
+  return showtimes;
+};
+
 const movies: Movie[] = [
-  { id: 1, title: "Neon Horizon", genre: "Action • Sci-Fi", duration: "2h 15m", poster: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=800" },
-  { id: 2, title: "Stellar Drift", genre: "Sci-Fi • Adventure", duration: "2h 45m", poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&q=80&w=800" },
-  { id: 3, title: "Shadow Protocol", genre: "Thriller • Crime", duration: "1h 58m", poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&q=80&w=800" },
-  { id: 4, title: "The Last Echo", genre: "Drama • Mystery", duration: "2h 10m", poster: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&q=80&w=800" },
+  { id: 1, title: "Neon Horizon", genre: "Action • Sci-Fi", duration: "2h 15m", poster: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=800", showtimes: generateMovieShowtimes(1) },
+  { id: 2, title: "Stellar Drift", genre: "Sci-Fi • Adventure", duration: "2h 45m", poster: "https://images.unsplash.com/photo-1534447677768-be436bb0949c?auto=format&fit=crop&q=80&w=800", showtimes: generateMovieShowtimes(2) },
+  { id: 3, title: "Shadow Protocol", genre: "Thriller • Crime", duration: "1h 58m", poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&q=80&w=800", showtimes: generateMovieShowtimes(3) },
+  { id: 4, title: "The Last Echo", genre: "Drama • Mystery", duration: "2h 10m", poster: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&q=80&w=800", showtimes: generateMovieShowtimes(4) },
 ];
 
 export default function MoviesPage() {
@@ -43,12 +75,14 @@ export default function MoviesPage() {
               <div className="absolute -left-4 bottom-0 z-10 select-none pointer-events-none">
               </div>
               <div className="relative md:w-xs w-40 aspect-2/3 ml-8 overflow-hidden rounded-md transition-transform duration-300 group-hover:scale-105 group-hover:z-30">
-                <img
+                <Image
                   src={movie.poster}
                   alt={movie.title}
+                  width={400}
+                  height={600}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </motion.div>
           ))}
