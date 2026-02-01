@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/Toast";
 import { Download, Calendar, Clock, MapPin, User, CreditCard, Share2 } from "lucide-react";
 
 interface TicketData {
@@ -22,6 +23,7 @@ function TicketContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuth();
+  const { showToast } = useToast();
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,12 +90,35 @@ Please arrive 15 minutes before showtime.
           text: shareText
         });
       } catch {
-        console.log('Share cancelled or failed');
+        // User cancelled or share failed silently
+      }
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showToast('success', 'Ticket details copied to clipboard!');
+      } catch {
+        fallbackCopyToClipboard(shareText);
       }
     } else {
-      navigator.clipboard.writeText(shareText);
-      alert('Ticket details copied to clipboard!');
+      fallbackCopyToClipboard(shareText);
     }
+  };
+
+  const fallbackCopyToClipboard = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      showToast('success', 'Ticket details copied to clipboard!');
+    } catch {
+      showToast('error', 'Failed to copy. Please copy manually.');
+    }
+    document.body.removeChild(textArea);
   };
 
   const handleEmail = () => {

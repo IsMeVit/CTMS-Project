@@ -1,8 +1,10 @@
 "use client";
 
+import Image from 'next/image';
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/components/ui/Toast";
 import { User, Calendar, Clock, DollarSign, Camera, X, Ticket, Film, Settings, LogOut, ChevronRight, Star } from "lucide-react";
 
 interface Booking {
@@ -38,6 +40,7 @@ function ProfileContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(true);
   const [showFullAvatar, setShowFullAvatar] = useState(false);
+  const { showToast } = useToast();
   const [greeting, setGreeting] = useState(getGreeting());
   const [currentDate, setCurrentDate] = useState(getCurrentDate());
 
@@ -56,7 +59,7 @@ function ProfileContent() {
     if (!file) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
+      showToast('error', 'Image must be less than 2MB');
       return;
     }
 
@@ -190,9 +193,11 @@ function ProfileContent() {
                     onClick={() => user?.avatar && setShowFullAvatar(true)}
                   >
                     {user?.avatar ? (
-                      <img 
-                        src={user.avatar} 
-                        alt="Profile" 
+                      <Image
+                        src={user.avatar}
+                        alt="Profile"
+                        width={112}
+                        height={112}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -435,9 +440,11 @@ function ProfileContent() {
           >
             <X size={28} />
           </button>
-          <img
+          <Image
             src={user.avatar}
             alt="Profile"
+            width={800}
+            height={600}
             className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl shadow-red-600/20 animate-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           />

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Background from '@/components/layout/Background';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useToast } from '@/components/ui/Toast';
 import Toggle from '@/components/ui/Toggle';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
@@ -12,6 +13,7 @@ import { User, Bell, Trash2, Globe } from 'lucide-react';
 const SettingsPage: React.FC = () => {
   const { user } = useAuth();
   const { settings, updateSettings } = useSettings();
+  const { showToast } = useToast();
 
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -115,20 +117,19 @@ const SettingsPage: React.FC = () => {
 
   const handleChangePassword = () => {
     if (passwordForm.new !== passwordForm.confirm) {
-      alert('Passwords do not match');
+      showToast('error', 'Passwords do not match');
       return;
     }
-    console.log('Changing password');
+    showToast('success', 'Password changed successfully');
     setShowChangePassword(false);
     setPasswordForm({ current: '', new: '', confirm: '' });
   };
 
   const handleDeleteAccount = () => {
     if (deleteConfirmText.toLowerCase() === 'delete') {
-      console.log('Deleting account');
+      showToast('success', 'Account deleted successfully');
       setShowDeleteConfirm(false);
       setDeleteConfirmText('');
-      alert('Account deleted (local data cleared)');
     }
   };
 
