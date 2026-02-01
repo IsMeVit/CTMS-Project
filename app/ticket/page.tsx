@@ -22,7 +22,7 @@ interface TicketData {
 function TicketContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isInitialized, isLoading } = useAuth();
   const { showToast } = useToast();
   const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -151,8 +151,14 @@ CTMS Cinemas Team
   useEffect(() => {
     let mounted = true;
     
+    if (!isInitialized) {
+      return;
+    }
+    
     if (!isAuthenticated) {
-      handleRedirect('login');
+      if (mounted) {
+        handleRedirect('login');
+      }
       return;
     }
 
@@ -210,7 +216,7 @@ CTMS Cinemas Team
       mounted = false;
       clearTimeout(timer);
     };
-  }, [isAuthenticated, router, searchParams, handleRedirect]);
+  }, [isAuthenticated, isInitialized, isLoading, router, searchParams, handleRedirect]);
 
   if (loading) {
     return (
