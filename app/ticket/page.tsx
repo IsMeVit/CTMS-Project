@@ -214,7 +214,7 @@ CTMS Cinemas Team
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen text-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p>Loading ticket...</p>
@@ -225,7 +225,7 @@ CTMS Cinemas Team
 
   if (error || redirecting) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen text-white flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">⚠️</span>
@@ -252,9 +252,9 @@ CTMS Cinemas Team
 
   if (!ticketData && !loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+      <div className="min-h-screen text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">🎫</span>
           </div>
           <h2 className="text-2xl font-bold mb-4">Ticket Not Found</h2>
@@ -273,7 +273,7 @@ CTMS Cinemas Team
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12">
+    <div className="min-h-screen text-white p-6 md:p-12">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <button 
