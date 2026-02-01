@@ -1,20 +1,34 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ctms-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=ctms_user
+      - POSTGRES_PASSWORD=ctms_password
+      - POSTGRES_DB=ctms_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
   ctms-app:
     build: .
     container_name: ctms-development
     ports:
       - "3000:3000"
     volumes:
-      # Mount the current directory for hot reloading
       - .:/app
-      # Preserve node_modules between container runs
       - /app/node_modules
-      # Preserve .next build files
       - /app/.next
     environment:
       - NODE_ENV=development
       - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - postgres
     restart: unless-stopped
-    # Keep the container running for interactive debugging
     stdin_open: true
     tty: true
+
+volumes:
+  postgres_data:

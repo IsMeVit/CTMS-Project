@@ -36,8 +36,10 @@ export default function DatePicker({ selectedDate, onDateSelect, showtimes }: Da
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
+    
     const today = new Date();
-    const todayStr = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().split('T')[0];
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
     
     const daysArray: DayInfo[] = [];
     
@@ -46,24 +48,26 @@ export default function DatePicker({ selectedDate, onDateSelect, showtimes }: Da
     const prevMonthDays = prevMonth.getDate();
     for (let i = startingDay - 1; i >= 0; i--) {
       const day = prevMonthDays - i;
-      const dateStr = new Date(year, month - 1, day).toISOString().split('T')[0];
+      const date = new Date(year, month - 1, day);
+      const dateStr = date.toISOString().split('T')[0];
       daysArray.push({
         date: dateStr,
         day,
         isCurrentMonth: false,
-        isPast: dateStr < todayStr,
+        isPast: date < today,
         available: showtimes.filter(s => s.date === dateStr).length
       });
     }
     
     // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
-      const dateStr = new Date(year, month, i).toISOString().split('T')[0];
+      const date = new Date(year, month, i);
+      const dateStr = date.toISOString().split('T')[0];
       daysArray.push({
         date: dateStr,
         day: i,
         isCurrentMonth: true,
-        isPast: dateStr < todayStr,
+        isPast: date < today,
         isToday: dateStr === todayStr,
         available: showtimes.filter(s => s.date === dateStr).length
       });
@@ -73,7 +77,8 @@ export default function DatePicker({ selectedDate, onDateSelect, showtimes }: Da
     const totalCells = Math.ceil((startingDay + daysInMonth) / 7) * 7;
     const remainingCells = totalCells - daysArray.length;
     for (let i = 1; i <= remainingCells; i++) {
-      const dateStr = new Date(year, month + 1, i).toISOString().split('T')[0];
+      const date = new Date(year, month + 1, i);
+      const dateStr = date.toISOString().split('T')[0];
       daysArray.push({
         date: dateStr,
         day: i,
@@ -157,16 +162,16 @@ export default function DatePicker({ selectedDate, onDateSelect, showtimes }: Da
               className="relative"
             >
               <button
-                onClick={() => !dayInfo.isPast && onDateSelect(dayInfo.date)}
+                onClick={() => !dayInfo.isPast && dayInfo.available > 0 && onDateSelect(dayInfo.date)}
                 disabled={dayInfo.isPast || dayInfo.available === 0}
                 className={`
-                  w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all
+                  w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all relative
                   ${!dayInfo.isCurrentMonth ? 'text-gray-600' : ''}
-                  ${dayInfo.isPast ? 'text-gray-700 cursor-not-allowed' : ''}
+                  ${dayInfo.isPast ? 'text-gray-600 cursor-not-allowed bg-gray-800/50' : ''}
                   ${dayInfo.isToday && dayInfo.isCurrentMonth ? 'border-2 border-green-500' : ''}
                   ${selectedDate === dayInfo.date && dayInfo.isCurrentMonth && !dayInfo.isPast ? 'bg-red-600 text-white' : ''}
                   ${!dayInfo.isPast && dayInfo.available > 0 && selectedDate !== dayInfo.date ? 'bg-white/10 text-white hover:bg-white/20' : ''}
-                  ${dayInfo.available === 0 ? 'opacity-30 cursor-not-allowed' : ''}
+                  ${dayInfo.available === 0 ? 'opacity-25 cursor-not-allowed' : ''}
                 `}
               >
                 {dayInfo.day}
@@ -177,6 +182,11 @@ export default function DatePicker({ selectedDate, onDateSelect, showtimes }: Da
                     absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 rounded-full
                     ${selectedDate === dayInfo.date ? 'bg-white' : dayInfo.available < 20 ? 'bg-yellow-500' : 'bg-green-500'}
                   `} />
+                )}
+                
+                {/* No showtimes indicator */}
+                {dayInfo.isCurrentMonth && !dayInfo.isPast && dayInfo.available === 0 && (
+                  <span className="absolute -bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-gray-500" />
                 )}
               </button>
               

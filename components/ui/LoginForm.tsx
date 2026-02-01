@@ -23,7 +23,7 @@ export default function LoginForm() {
 
     try {
       const success = await login(email, password);
-      
+
       if (success) {
         router.push("/home");
       } else {
@@ -88,9 +88,7 @@ export default function LoginForm() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-400">
-            Your session will be remembered
-          </span>
+          <span className="text-sm text-gray-400">Your session will be remembered</span>
           <a href="/forgot-password" className="text-sm text-red-500 hover:text-red-400">
             Forgot password?
           </a>
@@ -113,7 +111,7 @@ export default function LoginForm() {
       </form>
 
       <div className="mt-8 text-center text-sm text-gray-400">
-        <p>Don&apos;t have an account?{" "}</p>
+        <p>Don&apos;t have an account? </p>
         <a href="/signup" className="text-red-500 hover:text-red-400 font-medium">
           Sign up now
         </a>

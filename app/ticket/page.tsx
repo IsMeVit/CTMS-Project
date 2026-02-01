@@ -11,7 +11,6 @@ interface TicketData {
   movie: string;
   date: string;
   time: string;
-  showtimeId: string;
   seats: string[];
   totalPrice: number;
   timestamp: string;
@@ -36,42 +35,63 @@ function TicketContent() {
     return pattern.test(decoded) && decoded.length >= 8 && decoded.length <= 15;
   };
 
-  const handleRedirect = useCallback((type: 'login' | 'profile' | 'error', message?: string) => {
-    if (type === 'login') {
-      router.push('/login');
-    } else if (type === 'profile') {
-      router.push('/profile?error=' + encodeURIComponent(message || 'ticket_not_found'));
-    }
-  }, [router]);
+  const handleRedirect = useCallback(
+    (type: "login" | "profile" | "error", message?: string) => {
+      if (type === "login") {
+        router.push("/login");
+      } else if (type === "profile") {
+        router.push("/profile?error=" + encodeURIComponent(message || "ticket_not_found"));
+      }
+    },
+    [router]
+  );
 
   const handleDownload = () => {
     if (!ticketData) return;
-    
-    const ticketContent = `
-CINEMA TICKET - ${ticketData.reference || 'N/A'}
-=========================================
-${ticketData.cinemaName || 'CTMS Cinemas'}
-${ticketData.screen || 'Screen 1'}
 
-Movie: ${ticketData.movie || 'N/A'}
-Date: ${ticketData.date ? new Date(ticketData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
-Time: ${ticketData.time || 'N/A'}
-Seats: ${ticketData.seats?.join(', ') || 'N/A'}
+    const ticketContent = `
+CINEMA TICKET - ${ticketData.reference || "N/A"}
+========================================
+${ticketData.cinemaName || "CTMS Cinemas"}
+${ticketData.screen || "Screen 1"}
+
+Movie: ${ticketData.movie || "N/A"}
+Date: ${
+      ticketData.date
+        ? new Date(ticketData.date).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "N/A"
+    }
+Time: ${ticketData.time || "N/A"}
+Seats: ${ticketData.seats?.join(", ") || "N/A"}
 
 Price: $${ticketData.totalPrice || 0}
-Customer: ${user?.name || 'N/A'}
+Customer: ${user?.name || "N/A"}
 
-Booked on: ${ticketData.timestamp ? new Date(ticketData.timestamp).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+Booked on: ${
+      ticketData.timestamp
+        ? new Date(ticketData.timestamp).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "N/A"
+    }
 
 Please arrive 15 minutes before showtime.
-=========================================
+========================================
     `.trim();
 
-    const blob = new Blob([ticketContent], { type: 'text/plain' });
+    const blob = new Blob([ticketContent], { type: "text/plain" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `ticket-${ticketData.reference || 'unknown'}.txt`;
+    a.download = `ticket-${ticketData.reference || "unknown"}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -80,14 +100,16 @@ Please arrive 15 minutes before showtime.
 
   const handleShare = async () => {
     if (!ticketData) return;
-    
-    const shareText = `I just booked tickets for ${ticketData.movie || 'Unknown Movie'} on ${ticketData.date ? new Date(ticketData.date).toLocaleDateString() : 'Unknown Date'} at ${ticketData.time || 'Unknown Time'}! 🎬🍿 Booking Reference: ${ticketData.reference || 'N/A'}`;
-    
+
+    const shareText = `I just booked tickets for ${ticketData.movie || "Unknown Movie"} on ${
+      ticketData.date ? new Date(ticketData.date).toLocaleDateString() : "Unknown Date"
+    } at ${ticketData.time || "Unknown Time"}! 🎬🍿 Booking Reference: ${ticketData.reference || "N/A"}`;
+
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Cinema Ticket',
-          text: shareText
+          title: "Cinema Ticket",
+          text: shareText,
         });
       } catch {
         // User cancelled or share failed silently
@@ -95,7 +117,7 @@ Please arrive 15 minutes before showtime.
     } else if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(shareText);
-        showToast('success', 'Ticket details copied to clipboard!');
+        showToast("success", "Ticket details copied to clipboard!");
       } catch {
         fallbackCopyToClipboard(shareText);
       }
@@ -105,38 +127,47 @@ Please arrive 15 minutes before showtime.
   };
 
   const fallbackCopyToClipboard = (text: string) => {
-    const textArea = document.createElement('textarea');
+    const textArea = document.createElement("textarea");
     textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-999999px';
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
     try {
-      document.execCommand('copy');
-      showToast('success', 'Ticket details copied to clipboard!');
+      document.execCommand("copy");
+      showToast("success", "Ticket details copied to clipboard!");
     } catch {
-      showToast('error', 'Failed to copy. Please copy manually.');
+      showToast("error", "Failed to copy. Please copy manually.");
     }
     document.body.removeChild(textArea);
   };
 
   const handleEmail = () => {
     if (!ticketData) return;
-    
-    const subject = `Your Cinema Ticket - ${ticketData.reference || 'N/A'}`;
+
+    const subject = `Your Cinema Ticket - ${ticketData.reference || "N/A"}`;
     const body = `
-Hi ${user?.name || 'Customer'},
+Hi ${user?.name || "Customer"},
 
 Thank you for booking with CTMS Cinemas!
 
 Booking Details:
-- Reference: ${ticketData.reference || 'N/A'}
-- Movie: ${ticketData.movie || 'N/A'}
-- Date: ${ticketData.date ? new Date(ticketData.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
-- Time: ${ticketData.time || 'N/A'}
-- Screen: ${ticketData.screen || 'Screen 1'}
-- Seats: ${ticketData.seats?.join(', ') || 'N/A'}
+- Reference: ${ticketData.reference || "N/A"}
+- Movie: ${ticketData.movie || "N/A"}
+- Date: ${
+      ticketData.date
+        ? new Date(ticketData.date).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "N/A"
+    }
+- Time: ${ticketData.time || "N/A"}
+- Screen: ${ticketData.screen || "Screen 1"}
+- Seats: ${ticketData.seats?.join(", ") || "N/A"}
 - Total: $${ticketData.totalPrice || 0}
 
 Please arrive 15 minutes before showtime.
@@ -150,25 +181,25 @@ CTMS Cinemas Team
 
   useEffect(() => {
     let mounted = true;
-    
+
     if (!isInitialized) {
       return;
     }
-    
+
     if (!isAuthenticated) {
       if (mounted) {
-        handleRedirect('login');
+        handleRedirect("login");
       }
       return;
     }
 
-    const referenceParam = searchParams.get('ref');
-    
+    const referenceParam = searchParams.get("ref");
+
     if (!validateReference(referenceParam)) {
       if (mounted) {
-        setError(referenceParam ? 'Invalid ticket reference format' : 'No ticket reference provided');
+        setError(referenceParam ? "Invalid ticket reference format" : "No ticket reference provided");
         setRedirecting(true);
-        setTimeout(() => handleRedirect('profile', 'invalid_reference'), 3000);
+        setTimeout(() => handleRedirect("profile", "invalid_reference"), 3000);
       }
       return;
     }
@@ -177,31 +208,31 @@ CTMS Cinemas Team
 
     const loadTicketData = () => {
       if (!mounted) return;
-      
+
       try {
-        const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
+        const bookings = JSON.parse(localStorage.getItem("bookings") || "[]");
         const booking = bookings.find((b: TicketData) => b.reference === reference);
-        
+
         if (mounted) {
           if (booking) {
             setTicketData({
               ...booking,
               cinemaName: "CTMS Cinemas Main Branch",
-              screen: "Screen 1"
+              screen: "Screen 1",
             });
             setError(null);
           } else {
-            setError('Ticket not found');
+            setError("Ticket not found");
             setRedirecting(true);
-            setTimeout(() => handleRedirect('profile', 'ticket_not_found'), 3000);
+            setTimeout(() => handleRedirect("profile", "ticket_not_found"), 3000);
           }
         }
       } catch (err) {
-        console.error('Failed to load ticket:', err);
+        console.error("Failed to load ticket:", err);
         if (mounted) {
-          setError('Failed to load ticket data');
+          setError("Failed to load ticket data");
           setRedirecting(true);
-          setTimeout(() => handleRedirect('profile', 'load_error'), 3000);
+          setTimeout(() => handleRedirect("profile", "load_error"), 3000);
         }
       } finally {
         if (mounted) {
@@ -211,7 +242,7 @@ CTMS Cinemas Team
     };
 
     const timer = setTimeout(loadTicketData, 100);
-    
+
     return () => {
       mounted = false;
       clearTimeout(timer);
@@ -236,20 +267,15 @@ CTMS Cinemas Team
           <div className="w-16 h-16 bg-red-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-2xl">⚠️</span>
           </div>
-          <h2 className="text-2xl font-bold mb-4">
-            {error || 'Ticket Access Error'}
-          </h2>
+          <h2 className="text-2xl font-bold mb-4">{error || "Ticket Access Error"}</h2>
           <p className="text-gray-400 mb-6">
-            {redirecting 
-              ? 'Redirecting you to profile page...' 
-              : 'Please check your ticket reference and try again.'
-            }
+            {redirecting ? "Redirecting you to profile page..." : "Please check your ticket reference and try again."}
           </p>
-          <button 
-            onClick={() => router.push('/profile')}
+          <button
+            onClick={() => router.push("/profile")}
             className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all"
           >
-            {redirecting ? 'Go to Profile →' : 'Back to Profile'}
+            {redirecting ? "Go to Profile →" : "Back to Profile"}
           </button>
         </div>
       </div>
@@ -267,10 +293,7 @@ CTMS Cinemas Team
           <p className="text-gray-400 mb-6">
             The ticket reference you&apos;re looking for doesn&apos;t exist or may have expired.
           </p>
-          <button 
-            onClick={() => router.push('/profile')}
-            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all"
-          >
+          <button onClick={() => router.push("/profile")} className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all">
             Back to Profile
           </button>
         </div>
@@ -282,10 +305,7 @@ CTMS Cinemas Team
     <div className="min-h-screen text-white p-6 md:p-12">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
-          <button 
-            onClick={() => router.push('/profile')}
-            className="text-gray-500 hover:text-white mb-4 transition-colors"
-          >
+          <button onClick={() => router.push("/profile")} className="text-gray-500 hover:text-white mb-4 transition-colors">
             ← Back to Profile
           </button>
         </div>
@@ -309,7 +329,9 @@ CTMS Cinemas Team
               <h2 className="text-3xl font-bold mb-2">{ticketData?.movie}</h2>
               <div className="flex items-center gap-2 text-gray-400">
                 <MapPin size={16} />
-                <span>{ticketData?.cinemaName} - {ticketData?.screen}</span>
+                <span>
+                  {ticketData?.cinemaName} - {ticketData?.screen}
+                </span>
               </div>
             </div>
 
@@ -320,7 +342,13 @@ CTMS Cinemas Team
                   <span className="text-sm font-medium text-gray-400">DATE</span>
                 </div>
                 <p className="text-xl font-bold">
-                  {ticketData?.date ? new Date(ticketData.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'N/A'}
+                  {ticketData?.date
+                    ? new Date(ticketData.date).toLocaleDateString("en-US", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "N/A"}
                 </p>
               </div>
 
@@ -329,7 +357,7 @@ CTMS Cinemas Team
                   <Clock className="text-red-500" size={20} />
                   <span className="text-sm font-medium text-gray-400">TIME</span>
                 </div>
-                <p className="text-xl font-bold">{ticketData?.time || 'N/A'}</p>
+                <p className="text-xl font-bold">{ticketData?.time || "N/A"}</p>
               </div>
             </div>
 
@@ -403,12 +431,16 @@ CTMS Cinemas Team
 
 export default function TicketPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen text-white flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p>Loading ticket...</p>
-      </div>
-    </div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen text-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p>Loading ticket...</p>
+          </div>
+        </div>
+      }
+    >
       <TicketContent />
     </Suspense>
   );

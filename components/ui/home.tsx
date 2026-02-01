@@ -10,20 +10,18 @@ import {
   Play, Star, TrendingUp, ChevronRight,
   Sparkles, Heart, Search, Clock, Ticket
 } from "lucide-react";
+import { getMoviesAPI } from "@/lib/api";
 
 interface Movie {
-  id: number;
+  id: string;
   title: string;
+  description: string;
+  posterUrl: string;
+  duration: number;
   genre: string;
-  poster: string;
-  rating: string;
+  rating: number;
+  createdAt: string;
 }
-
-const featuredMovies: Movie[] = [
-  { id: 1, title: "Neon Horizon", genre: "Action • Sci-Fi", poster: "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=400", rating: "9.2" },
-  { id: 2, title: "Stellar Drift", genre: "Sci-Fi • Adventure", poster: "https://images.unsplash.com/photo-1534447677768-be436bb0949c?auto=format&fit=crop&q=80&w=400", rating: "8.9" },
-  { id: 3, title: "Shadow Protocol", genre: "Thriller • Crime", poster: "https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&q=80&w=400", rating: "8.7" },
-];
 
 const quickActions = [
   { id: 1, icon: Film, label: "Movies", color: "from-red-500 to-red-700", path: "/movies", description: "Browse all movies" },
@@ -43,24 +41,35 @@ export default function Home() {
   const { isAuthenticated, user } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [featuredMovies, setFeaturedMovies] = useState<Movie[]>([]);
+  const [totalMovies, setTotalMovies] = useState(12);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setMounted(true);
-    }, 100);
-    return () => clearTimeout(timeout);
+    setMounted(true);
+
+    const fetchMovies = async () => {
+      try {
+        const movies = await getMoviesAPI();
+        const sorted = [...movies].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        setFeaturedMovies(sorted.slice(0, 3));
+        setTotalMovies(movies.length || 12);
+      } catch (error) {
+        console.error("Failed to fetch movies:", error);
+      }
+    };
+    fetchMovies();
   }, []);
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      router.push('/movies');
+      router.push("/movies");
     } else {
-      router.push('/signup');
+      router.push("/signup");
     }
   };
 
   const handleBrowseMovies = () => {
-    router.push('/movies');
+    router.push("/movies");
   };
 
   const handleQuickAction = (path: string) => {
@@ -78,11 +87,9 @@ export default function Home() {
 
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
-      {/* Hero Section */}
       <div className="relative flex items-center justify-center min-h-screen px-4 py-20">
         <div className="relative z-10 text-center max-w-5xl mx-auto w-full">
           
-          {/* Welcome Message */}
           <motion.div
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -95,7 +102,6 @@ export default function Home() {
             </span>
           </motion.div>
 
-          {/* Main Title */}
           <motion.h1
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -109,7 +115,6 @@ export default function Home() {
             </span>
           </motion.h1>
 
-          {/* Tagline */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -119,7 +124,6 @@ export default function Home() {
             Experience cinema like never before with premium seats, stunning visuals, and unforgettable moments.
           </motion.p>
 
-          {/* Search Bar */}
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -145,7 +149,6 @@ export default function Home() {
             </div>
           </motion.form>
 
-          {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -176,7 +179,6 @@ export default function Home() {
             </motion.button>
           </motion.div>
 
-          {/* Enhanced Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -184,7 +186,7 @@ export default function Home() {
             className="flex flex-wrap justify-center gap-6 md:gap-12 pt-8 border-t border-white/10"
           >
             {[
-              { value: "12+", label: "Movies", icon: Film, sublabel: "Available" },
+              { value: `${totalMovies}+`, label: "Movies", icon: Film, sublabel: "Available" },
               { value: "4", label: "New", icon: TrendingUp, sublabel: "This Week" },
               { value: "100%", label: "Satisfaction", icon: Heart, sublabel: "Guaranteed" },
               { value: "24/7", label: "Support", icon: Clock, sublabel: "Always Here" },
@@ -209,7 +211,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Promotional Banner */}
       <motion.div
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
@@ -237,7 +238,6 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Featured Section */}
       <div className="relative px-4 py-16">
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -263,66 +263,87 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <AnimatePresence>
-              {featuredMovies.map((movie, index) => (
-                <motion.div
-                  key={movie.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.15 }}
-                  whileHover={{ y: -10 }}
-                  className="group relative cursor-pointer"
-                  onClick={handleBrowseMovies}
-                >
-                  <div className="relative aspect-2/3 rounded-3xl overflow-hidden">
-                    <Image
-                      src={movie.poster}
-                      alt={movie.title}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent" />
-                    
-                    {/* Rating Badge */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-lg">
-                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      <span className="text-sm font-bold text-white">{movie.rating}</span>
-                    </div>
+              {featuredMovies.length > 0 ? (
+                featuredMovies.map((movie, index) => (
+                  <motion.div
+                    key={movie.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.15 }}
+                    whileHover={{ y: -10 }}
+                    className="group relative cursor-pointer"
+                    onClick={handleBrowseMovies}
+                  >
+                    <div className="relative aspect-2/3 rounded-3xl overflow-hidden">
+                      {movie.posterUrl && !movie.posterUrl.includes("duckduckgo.com") ? (
+                        <Image
+                          src={movie.posterUrl}
+                          alt={movie.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          priority
+                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-linear-to-br from-red-600/30 to-red-700/20 flex items-center justify-center">
+                          <span className="text-6xl">🎬</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent" />
+                      
+                      <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1.5 bg-black/70 backdrop-blur-sm rounded-lg">
+                        <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <span className="text-sm font-bold text-white">{movie.rating.toFixed(1)}</span>
+                      </div>
 
-                    {/* Content Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                      <p className="text-xs text-red-400 font-medium mb-2 uppercase tracking-wider">{movie.genre}</p>
-                      <h3 className="text-2xl font-bold text-white group-hover:text-red-400 transition-colors mb-2">
-                        {movie.title}
-                      </h3>
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        whileHover={{ opacity: 1 }}
-                        className="flex items-center gap-2 text-sm text-gray-300"
-                      >
-                        <Play className="w-4 h-4" /> Click to book
-                      </motion.div>
-                    </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-6">
+                        <p className="text-xs text-red-400 font-medium mb-2 uppercase tracking-wider">{movie.genre}</p>
+                        <h3 className="text-2xl font-bold text-white group-hover:text-red-400 transition-colors mb-2">
+                          {movie.title}
+                        </h3>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          whileHover={{ opacity: 1 }}
+                          className="flex items-center gap-2 text-sm text-gray-300"
+                        >
+                          <Play className="w-4 h-4" /> Click to book
+                        </motion.div>
+                      </div>
 
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40 backdrop-blur-sm">
-                      <motion.div
-                        whileHover={{ scale: 1.15 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center shadow-2xl shadow-red-600/50"
-                      >
-                        <Play className="w-10 h-10 text-white ml-1" />
-                      </motion.div>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-black/40 backdrop-blur-sm">
+                        <motion.div
+                          whileHover={{ scale: 1.15 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="w-20 h-20 rounded-full bg-red-600 flex items-center justify-center shadow-2xl shadow-red-600/50"
+                        >
+                          <Play className="w-10 h-10 text-white ml-1" />
+                        </motion.div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                [1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="relative aspect-2/3 rounded-3xl overflow-hidden bg-white/5 animate-pulse"
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Film className="w-16 h-16 text-gray-600" />
                     </div>
                   </div>
-                </motion.div>
-              ))}
+                ))
+              )}
             </AnimatePresence>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="relative px-4 py-16">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -364,7 +385,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Testimonials */}
       <div className="relative px-4 py-16">
         <div className="max-w-5xl mx-auto">
           <motion.div
@@ -400,7 +420,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Scroll to Top */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

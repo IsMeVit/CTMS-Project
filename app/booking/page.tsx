@@ -1,27 +1,92 @@
-"use client"
+"use client";
 
-import { useState, Suspense, useCallback } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState, Suspense, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import { getMoviesAPI, type SeatRow, type Movie } from "@/lib/api";
+
+interface SelectedSeat {
+  rowId: string;
+  seatNumber: number;
+  price: number;
+  label: string;
+}
+
+interface Booking {
+  reference: string;
+  userId: string;
+  movie: string;
+  date: string;
+  time: string;
+  seats: string[];
+  totalPrice: number;
+  timestamp: string;
+}
 
 function BookingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const movieTitle = searchParams.get('movie') || "Movie";
-  const selectedDate = searchParams.get('date') || "";
-  const selectedTime = searchParams.get('time') || "";
-  const showtimeId = searchParams.get('showtimeId') || "";
+  const { user, isAuthenticated, isInitialized } = useAuth();
 
-  const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
-  const [bookingConfirmed, setBookingConfirmed] = useState(false);
-  const [bookingReference, setBookingReference] = useState("");
-  const SEAT_PRICE = 12;
-  const ROWS = ["A", "B", "C", "D", "E"];
-  const SEATS_PER_ROW = 8;
+  const movieTitle = searchParams.get("movie") || "Movie";
+  const selectedDate = searchParams.get("date") || "";
+  const selectedTime = searchParams.get("time") || "";
 
-  const toggleSeat = (id: string) => {
-    setSelectedSeats(prev => 
-      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
-    );
+  const [selectedSeats, setSelectedSeats] = useState<SelectedSeat[]>([]);
+  const [bookedSeats, setBookedSeats] = useState<string[]>([]);
+  const [movie, setMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    const fetchMovie = async () => {
+      try {
+        const movies = await getMoviesAPI();
+        const allMovies = Array.isArray(movies) ? movies : [];
+        const found = allMovies.find((m) => m.title === movieTitle);
+        if (found) {
+          setMovie(found);
+
+          const allBookings: Booking[] = JSON.parse(localStorage.getItem("bookings") || "[]");
+          const existingBookedSeats = allBookings
+            .filter(
+              (b) =>
+                b.movie === movieTitle &&
+                b.date === selectedDate &&
+                b.time === selectedTime &&
+                b.userId !== user?.id
+            )
+            .flatMap((b) => b.seats);
+          setBookedSeats(existingBookedSeats);
+        }
+      } catch (error) {
+        console.error("Failed to load movie:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovie();
+  }, [isAuthenticated, isInitialized, router, movieTitle, selectedDate, selectedTime, user?.id]);
+
+  const toggleSeat = (rowId: string, seatNumber: number, price: number, label: string) => {
+    const seatId = `${rowId}${seatNumber}`;
+    if (bookedSeats.includes(seatId)) return;
+
+    setSelectedSeats((prev) => {
+      const exists = prev.find((s) => s.rowId === rowId && s.seatNumber === seatNumber);
+      if (exists) {
+        return prev.filter((s) => !(s.rowId === rowId && s.seatNumber === seatNumber));
+      } else {
+        return [...prev, { rowId, seatNumber, price, label }];
+      }
+    });
   };
 
   const generateBookingReference = useCallback(() => {
@@ -30,83 +95,56 @@ function BookingContent() {
 
   const confirmBooking = useCallback(() => {
     if (selectedSeats.length === 0) return;
-    
-    // Generate booking reference
+
     const ref = generateBookingReference();
-    setBookingReference(ref);
-    
-    // Store booking data (using localStorage for now)
+    const totalPrice = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+
     const booking = {
       reference: ref,
+      userId: user?.id || "guest",
       movie: movieTitle,
       date: selectedDate,
       time: selectedTime,
-      showtimeId,
-      seats: selectedSeats,
-      totalPrice: selectedSeats.length * SEAT_PRICE,
-      timestamp: new Date().toISOString()
+      seats: selectedSeats.map((s) => `${s.rowId}${s.seatNumber}`),
+      totalPrice,
+      timestamp: new Date().toISOString(),
     };
-    
-    // Save to localStorage (this will be moved to a proper backend later)
-    const existingBookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-    localStorage.setItem('bookings', JSON.stringify([...existingBookings, booking]));
-    
-    // Redirect to ticket page
+
+    const existingBookings = JSON.parse(localStorage.getItem("bookings") || "[]");
+    localStorage.setItem("bookings", JSON.stringify([...existingBookings, booking]));
+
     router.push(`/ticket?ref=${ref}`);
-  }, [selectedSeats, movieTitle, selectedDate, selectedTime, showtimeId, generateBookingReference, router]);
+  }, [selectedSeats, movieTitle, selectedDate, selectedTime, generateBookingReference, router, user?.id]);
 
-  const newBooking = () => {
-    setSelectedSeats([]);
-    setBookingConfirmed(false);
-    setBookingReference("");
-    router.push('/movies');
-  };
+  const totalPrice = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
 
-  if (bookingConfirmed) {
+  if (loading || !isInitialized) {
     return (
-      <section className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 flex flex-col items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="mb-8">
-            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-black uppercase italic tracking-tighter mb-2">
-              Booking Confirmed!
-            </h1>
-            <p className="text-red-600 font-bold text-xl mb-4">{bookingReference}</p>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl mb-8">
-            <h2 className="text-lg font-bold mb-4">Booking Details</h2>
-            <div className="space-y-2 text-left">
-              <p className="text-gray-400"><span className="text-white">Movie:</span> {movieTitle}</p>
-              <p className="text-gray-400"><span className="text-white">Date:</span> {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-              <p className="text-gray-400"><span className="text-white">Time:</span> {selectedTime}</p>
-              <p className="text-gray-400"><span className="text-white">Seats:</span> {selectedSeats.join(', ')}</p>
-              <p className="text-gray-400"><span className="text-white">Total:</span> ${selectedSeats.length * SEAT_PRICE}</p>
-            </div>
-          </div>
-
-          <button 
-            onClick={newBooking}
-            className="bg-red-600 hover:bg-red-700 px-8 py-4 rounded-xl font-bold uppercase tracking-tighter transition-all active:scale-95"
-          >
-            Make Another Booking
-          </button>
+      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p>Loading...</p>
         </div>
-      </section>
+      </div>
     );
   }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const rows = movie?.seatConfig || [
+    { rowId: "A", label: "VIP", price: 15, seats: 8 },
+    { rowId: "B", label: "VIP", price: 15, seats: 8 },
+    { rowId: "C", label: "Regular", price: 12, seats: 8 },
+    { rowId: "D", label: "Regular", price: 12, seats: 8 },
+    { rowId: "E", label: "Regular", price: 12, seats: 8 },
+  ];
 
   return (
     <section className="min-h-screen bg-[#0a0a0a] text-white p-6 md:p-12 flex flex-col items-center">
       <div className="mb-12 text-center">
-        <button 
-          onClick={() => router.back()}
-          className="text-gray-500 hover:text-white mb-4 transition-colors"
-        >
+        <button onClick={() => router.back()} className="text-gray-500 hover:text-white mb-4 transition-colors">
           ← Back to Movies
         </button>
         <h1 className="text-4xl font-black uppercase italic tracking-tighter">
@@ -114,7 +152,12 @@ function BookingContent() {
         </h1>
         {selectedDate && selectedTime && (
           <p className="text-gray-400 mt-2 text-sm">
-            {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} at {selectedTime}
+            {new Date(selectedDate).toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}{" "}
+            at {selectedTime}
           </p>
         )}
       </div>
@@ -124,27 +167,34 @@ function BookingContent() {
         <p className="text-center text-[10px] text-gray-500 uppercase tracking-[0.5em] mt-4">Screen</p>
       </div>
 
-      <div className="grid gap-4 mb-12 bg-white/5 p-8 rounded-3xl border border-white/10">
-        {ROWS.map((row) => (
-          <div key={row} className="flex gap-3 items-center">
-            <span className="w-6 text-gray-600 font-bold text-xs">{row}</span>
-            <div className="flex gap-2 md:gap-4">
-              {Array.from({ length: SEATS_PER_ROW }).map((_, i) => {
-                const seatId = `${row}${i + 1}`;
-                const isSelected = selectedSeats.includes(seatId);
-                
+      <div className="grid gap-4 mb-12 bg-white/5 p-8 rounded-3xl border border-white/10 w-full max-w-2xl">
+        {rows.map((row: SeatRow) => (
+          <div key={row.rowId} className="flex gap-3 items-center">
+            <span className="w-6 text-gray-600 font-bold text-xs">{row.rowId}</span>
+            <div className="flex gap-2 md:gap-4 flex-wrap">
+              {Array.from({ length: row.seats }).map((_, i) => {
+                const seatId = `${row.rowId}${i + 1}`;
+                const isSelected = selectedSeats.some((s) => s.rowId === row.rowId && s.seatNumber === i + 1);
+                const isBooked = bookedSeats.includes(seatId);
+
                 return (
                   <button
                     key={seatId}
-                    onClick={() => toggleSeat(seatId)}
-                    className={`w-7 h-7 md:w-9 md:h-9 rounded-md transition-all duration-300 
-                      ${isSelected 
-                        ? "bg-red-600 scale-110 shadow-[0_0_15px_rgba(220,38,38,0.6)]" 
-                        : "bg-zinc-800 hover:bg-zinc-700 border border-white/5"}`}
+                    onClick={() => toggleSeat(row.rowId, i + 1, row.price, row.label)}
+                    disabled={isBooked}
+                    className={`w-7 h-7 md:w-9 md:h-9 rounded-md transition-all duration-300 ${
+                      isBooked
+                        ? "bg-gray-800/50 border border-gray-700 cursor-not-allowed opacity-40"
+                        : isSelected
+                        ? "bg-red-600 scale-110 shadow-[0_0_15px_rgba(220,38,38,0.6)]"
+                        : "bg-zinc-800 hover:bg-zinc-700 border border-white/5"
+                    }`}
+                    title={`Row ${row.rowId} Seat ${i + 1} - $${isBooked ? "Booked" : row.price}`}
                   />
                 );
               })}
             </div>
+            <span className="text-xs text-gray-500 ml-2">${row.price}</span>
           </div>
         ))}
       </div>
@@ -155,16 +205,35 @@ function BookingContent() {
             <div className="w-3 h-3 bg-zinc-800 rounded-sm" /> Available
           </div>
           <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-gray-800/50 rounded-sm" /> Booked
+          </div>
+          <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-600 rounded-sm" /> Selected
           </div>
         </div>
 
+        {selectedSeats.length > 0 && (
+          <div className="bg-white/5 rounded-xl p-4 mb-4">
+            <h4 className="text-sm font-bold text-gray-400 mb-2">Selected Seats:</h4>
+            <div className="flex flex-wrap gap-2">
+              {selectedSeats.map((seat) => (
+                <span
+                  key={`${seat.rowId}${seat.seatNumber}`}
+                  className="px-3 py-1 bg-red-600/20 text-red-400 rounded-full text-sm"
+                >
+                  {seat.rowId}{seat.seatNumber} (${seat.price})
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-2xl flex justify-between items-center">
           <div>
             <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Total Price</p>
-            <p className="text-3xl font-black">${selectedSeats.length * SEAT_PRICE}</p>
+            <p className="text-3xl font-black">${totalPrice}</p>
           </div>
-          <button 
+          <button
             onClick={confirmBooking}
             disabled={selectedSeats.length === 0}
             className="bg-red-600 hover:bg-red-700 disabled:opacity-30 disabled:grayscale px-8 py-4 rounded-xl font-bold uppercase tracking-tighter transition-all active:scale-95 shadow-lg shadow-red-600/20"
@@ -174,13 +243,17 @@ function BookingContent() {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 export default function BookingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-white">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white">Loading...</div>
+      }
+    >
       <BookingContent />
     </Suspense>
-  )
+  );
 }

@@ -1,36 +1,47 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
-import Background from './Background';
-import { Menu, X, LogOut, UserCircle, Settings, ChevronDown } from 'lucide-react';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState, useRef, useEffect } from "react";
+import Background from "./Background";
+import { Menu, X, LogOut, UserCircle, Settings, ChevronDown, Shield } from "lucide-react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+
 interface NavLink {
   name: string;
   path: string;
 }
+
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { user, logout, isAuthenticated } = useAuth();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    setIsAdmin(!!token);
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsProfileDropdownOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
     };
   }, []);
+
   const navLinks: NavLink[] = [
-    { name: 'HOME', path: '/home' },
-    { name: 'MOVIES', path: '/movies' },
-    { name: 'ABOUT US', path: '/about' },
+    { name: "HOME", path: "/home" },
+    { name: "MOVIES", path: "/movies" },
+    { name: "ABOUT US", path: "/about" },
   ];
+
   return (
     <>
       <Background />
@@ -53,9 +64,9 @@ const Navbar: React.FC = () => {
               </li>
             ))}
           </ul>
-          
+
           <span className="h-4 w-px bg-white/20" aria-hidden="true" />
-          
+
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               <div className="relative" ref={dropdownRef}>
@@ -66,37 +77,50 @@ const Navbar: React.FC = () => {
                   aria-haspopup="true"
                 >
                   <UserCircle size={16} />
-                  <span className="text-sm text-gray-300">
-                    {user?.name}
-                  </span>
-                  <ChevronDown size={12} className={`transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                  <span className="text-sm text-gray-300">{user?.name}</span>
+                  <ChevronDown
+                    size={12}
+                    className={`transition-transform duration-200 ${
+                      isProfileDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </button>
                 {isProfileDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a1a] rounded-lg shadow-lg border border-white/10 py-2 z-50">
                     <div className="p-2">
                       <Link
                         href="/profile"
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors"
                         onClick={() => setIsProfileDropdownOpen(false)}
                       >
                         <UserCircle size={16} />
-                        <span className="text-gray-700">My Profile</span>
+                        <span className="text-gray-300">My Profile</span>
                       </Link>
                       <Link
                         href="/settings"
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors"
                         onClick={() => setIsProfileDropdownOpen(false)}
                       >
                         <Settings size={16} />
-                        <span className="text-gray-700">Settings</span>
+                        <span className="text-gray-300">Settings</span>
                       </Link>
-                      <div className="border-t border-gray-200 my-2" />
+                      {isAdmin && (
+                        <Link
+                          href="/admin/dashboard"
+                          className="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors"
+                          onClick={() => setIsProfileDropdownOpen(false)}
+                        >
+                          <Shield size={16} />
+                          <span className="text-gray-300">Admin Panel</span>
+                        </Link>
+                      )}
+                      <div className="border-t border-white/10 my-2" />
                       <button
                         onClick={() => {
                           logout();
                           setIsProfileDropdownOpen(false);
                         }}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="w-full flex items-center gap-3 px-3 py-2 text-red-400 hover:bg-red-600/10 rounded-lg transition-colors"
                       >
                         <LogOut size={16} />
                         <span className="font-medium">Logout</span>
@@ -115,7 +139,7 @@ const Navbar: React.FC = () => {
             </a>
           )}
         </div>
-        <button 
+        <button
           className="md:hidden z-50 p-2 text-gray-500 hover:text-white"
           onClick={() => setIsOpen(!isOpen)}
         >
@@ -124,7 +148,7 @@ const Navbar: React.FC = () => {
       </nav>
       {isOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setIsOpen(false)}
           />
@@ -140,15 +164,38 @@ const Navbar: React.FC = () => {
                   {link.name}
                 </a>
               ))}
-              
+
               <hr className="border-white/10" />
-              
+
               {isAuthenticated ? (
                 <>
                   <div className="flex items-center gap-2 text-gray-300">
                     <UserCircle size={16} />
                     <span className="text-sm font-bold">{user?.name}</span>
                   </div>
+                  <a
+                    href="/profile"
+                    onClick={() => setIsOpen(false)}
+                    className="text-lg font-bold tracking-widest text-gray-300 hover:text-red-600 transition-colors"
+                  >
+                    My Profile
+                  </a>
+                  <a
+                    href="/settings"
+                    onClick={() => setIsOpen(false)}
+                    className="text-lg font-bold tracking-widest text-gray-300 hover:text-red-600 transition-colors"
+                  >
+                    Settings
+                  </a>
+                  {isAdmin && (
+                        <a
+                          href="/admin/dashboard"
+                          onClick={() => setIsOpen(false)}
+                          className="text-lg font-bold tracking-widest text-red-500 hover:text-red-400 transition-colors"
+                        >
+                          Admin Panel
+                        </a>
+                      )}
                   <button
                     onClick={() => {
                       logout();
@@ -175,4 +222,5 @@ const Navbar: React.FC = () => {
     </>
   );
 };
+
 export default Navbar;

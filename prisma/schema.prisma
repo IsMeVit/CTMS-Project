@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Movie {
+  movie_id      Int        @id @default(autoincrement())
+  title         String     @map("title")
+  genre         String     @map("genre")
+  duration      Int        @map("duration")
+  description   String?    @map("description")
+  poster_url    String?    @map("poster_url")
+  rating        Decimal?   @map("rating") @db.Decimal(2, 1)
+  release_date  DateTime?  @map("release_date") @db.Date
+  end_date      DateTime?  @map("end_date") @db.Date
+  created_at    DateTime   @default(now()) @map("created_at")
+  updated_at    DateTime   @updatedAt @map("updated_at")
+  showtimes     Showtime[]
+
+  @@map("movie")
+}
+
+model Hall {
+  hall_id       Int        @id @default(autoincrement())
+  hall_name     String     @map("hall_name")
+  capacity      Int        @map("capacity")
+  created_at    DateTime   @default(now()) @map("created_at")
+  seats         Seat[]
+  showtimes     Showtime[]
+
+  @@map("hall")
+}
+
+model Seat {
+  seat_id          Int        @id @default(autoincrement())
+  hall_id          Int        @map("hall_id")
+  seat_row         String     @map("seat_row") @db.VarChar(10)
+  seat_number      Int        @map("seat_number")
+  seat_type        String?    @map("seat_type") @db.VarChar(10)
+  price_multiplier Decimal?   @map("price_multiplier") @db.Decimal(3, 2) @default(1.00)
+  created_at       DateTime   @default(now()) @map("created_at")
+  hall             Hall       @relation(fields: [hall_id], references: [hall_id])
+  tickets          Ticket[]
+
+  @@unique([hall_id, seat_row, seat_number])
+  @@map("seat")
+}
+
+model Showtime {
+  showtime_id    Int        @id @default(autoincrement())
+  movie_id       Int        @map("movie_id")
+  hall_id        Int        @map("hall_id")
+  show_date      DateTime   @map("show_date") @db.Date
+  show_time      DateTime   @map("show_time") @db.Time(0)
+  price          Decimal    @map("price") @db.Decimal(10, 2)
+  created_at     DateTime   @default(now()) @map("created_at")
+  movie          Movie      @relation(fields: [movie_id], references: [movie_id])
+  hall           Hall       @relation(fields: [hall_id], references: [hall_id])
+  tickets        Ticket[]
+
+  @@unique([movie_id, hall_id, show_date, show_time])
+  @@map("showtime")
+}
+
+model Customer {
+  customer_id    Int        @id @default(autoincrement())
+  full_name      String     @map("full_name") @db.VarChar(50)
+  email          String?    @map("email") @db.VarChar(50)
+  telnum         String?    @map("telnum") @db.VarChar(10)
+  created_at     DateTime   @default(now()) @map("created_at")
+  tickets        Ticket[]
+
+  @@map("customer")
+}
+
+model Ticket {
+  ticket_id      Int        @id @default(autoincrement())
+  showtime_id    Int        @map("showtime_id")
+  seat_id        Int        @map("seat_id")
+  customer_id    Int?       @map("customer_id")
+  user_id        String?    @map("user_id")
+  purchase_time  DateTime   @map("purchase_time") @db.Time(0)
+  reference      String     @unique @map("reference")
+  total_price    Decimal    @map("total_price") @db.Decimal(10, 2)
+  created_at     DateTime   @default(now()) @map("created_at")
+  showtime       Showtime   @relation(fields: [showtime_id], references: [showtime_id])
+  seat           Seat       @relation(fields: [seat_id], references: [seat_id])
+  customer       Customer?  @relation(fields: [customer_id], references: [customer_id])
+
+  @@map("ticket")
+}
+
+model Payment {
+  payment_id     Int        @id @default(autoincrement())
+  ticket_id      Int?       @map("ticket_id")
+  amount         Decimal    @map("amount") @db.Decimal(10, 2)
+  payment_time   DateTime   @map("payment_time") @db.Time(0)
+  created_at     DateTime   @default(now()) @map("created_at")
+
+  @@map("payment")
+}
+
+model Membership {
+  membership_id  Int        @id @default(autoincrement())
+  ticket_id      Int?       @map("ticket_id")
+  full_name      String     @map("full_name") @db.VarChar(50)
+  email          String?    @map("email") @db.VarChar(50)
+  tel_num        String?    @map("tel_num") @db.VarChar(10)
+  created_at     DateTime   @default(now()) @map("created_at")
+
+  @@map("membership")
+}

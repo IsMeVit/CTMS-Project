@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 interface User {
   id: string;
@@ -37,37 +37,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const mounted = true;
-    
+    let mounted = true;
+
     const initializeAuth = async () => {
       try {
-        // Wrap localStorage access in try-catch for potential security violations
-        const token = localStorage.getItem('authToken');
-        const userData = localStorage.getItem('userData');
-        
+        const token = localStorage.getItem("authToken");
+        const userData = localStorage.getItem("userData");
+
         if (mounted) {
           if (token && userData) {
             try {
               const parsedUser = JSON.parse(userData);
-              // Validate that user object has required fields
               if (parsedUser.id && parsedUser.email) {
                 setUser(parsedUser);
               } else {
-                // Invalid user data, clean up
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userData');
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("userData");
               }
             } catch (error) {
-              console.error('Failed to parse user data:', error);
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('userData');
+              console.error("Failed to parse user data:", error);
+              localStorage.removeItem("authToken");
+              localStorage.removeItem("userData");
             }
           }
           setIsLoading(false);
           setIsInitialized(true);
         }
       } catch (error) {
-        console.error('Failed to initialize auth:', error);
+        console.error("Failed to initialize auth:", error);
         if (mounted) {
           setIsLoading(false);
           setIsInitialized(true);
@@ -78,46 +75,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth();
 
     return () => {
-      // Cleanup function
+      mounted = false;
     };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    if (isLoading) return false; // Prevent concurrent login attempts
-    
-    const isMounted = true;
+    if (isLoading) return false;
+
+    let isMounted = true;
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!isMounted) return false; // Component unmounted during async operation
-      
-      // Check if user exists in localStorage
-      const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-      const existingUser = users.find(u => u.email === email && u.password === password);
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      if (!isMounted) return false;
+
+      const users: StoredUser[] = JSON.parse(localStorage.getItem("users") || "[]");
+      const existingUser = users.find((u) => u.email === email && u.password === password);
+
       if (existingUser && isMounted) {
         const userData = {
           id: existingUser.id,
           name: existingUser.name,
           email: existingUser.email,
-          avatar: existingUser.avatar
+          avatar: existingUser.avatar,
         };
-        
+
         const token = `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
-        // Atomic update of localStorage
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('userData', JSON.stringify(userData));
+
+        localStorage.setItem("authToken", token);
+        localStorage.setItem("userData", JSON.stringify(userData));
         setUser(userData);
         return true;
       }
-      
+
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       return false;
     } finally {
       if (isMounted) {
@@ -127,58 +121,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    if (isLoading) return false; // Prevent concurrent signup attempts
-    
-    const isMounted = true;
+    if (isLoading) return false;
+
+    let isMounted = true;
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (!isMounted) return false; // Component unmounted during async operation
-      
-      // Check if user already exists
-      const users: StoredUser[] = JSON.parse(localStorage.getItem('users') || '[]');
-      const existingUser = users.find(u => u.email === email);
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      if (!isMounted) return false;
+
+      const users: StoredUser[] = JSON.parse(localStorage.getItem("users") || "[]");
+      const existingUser = users.find((u) => u.email === email);
+
       if (existingUser) {
-        return false; // User already exists
+        return false;
       }
-      
-      // Create new user
+
       const newUser = {
         id: `user-${Date.now()}`,
         name,
         email,
-        password, // In real app, this should be hashed
-        createdAt: new Date().toISOString()
+        password,
+        createdAt: new Date().toISOString(),
       };
-      
+
       users.push(newUser);
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      // Auto login after signup
+      localStorage.setItem("users", JSON.stringify(users));
+
       const userData = {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
-        avatar: undefined
+        avatar: undefined,
       };
-      
+
       const token = `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Atomic update of localStorage
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('userData', JSON.stringify(userData));
-      
+
+      localStorage.setItem("authToken", token);
+      localStorage.setItem("userData", JSON.stringify(userData));
+
       if (isMounted) {
         setUser(userData);
       }
       return true;
-      
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
       return false;
     } finally {
       if (isMounted) {
@@ -189,13 +177,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = () => {
     try {
-      // Clear localStorage atomically
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userData");
       setUser(null);
     } catch (error) {
-      console.error('Logout error:', error);
-      // Still set user to null even if localStorage fails
+      console.error("Logout error:", error);
       setUser(null);
     }
   };
@@ -207,9 +193,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(updatedUser);
 
     try {
-      localStorage.setItem('userData', JSON.stringify(updatedUser));
+      localStorage.setItem("userData", JSON.stringify(updatedUser));
     } catch (error) {
-      console.error('Failed to save avatar:', error);
+      console.error("Failed to save avatar:", error);
     }
   };
 
@@ -221,20 +207,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateAvatar,
     isLoading,
     isAuthenticated: !!user,
-    isInitialized
+    isInitialized,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
