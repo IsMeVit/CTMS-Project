@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Edit, Trash2, LogOut, Film, Search } from "lucide-react";
+import { Plus, Edit, Trash2, LogOut, Film, Search, CheckSquare, Square } from "lucide-react";
 import { getMoviesAPI, deleteMovieAPI } from "@/lib/api";
 
 interface Movie {
@@ -22,10 +22,13 @@ function DashboardContent() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedMovies, setSelectedMovies] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
-    if (!token) {
+    const expiry = localStorage.getItem("adminTokenExpiry");
+    if (!token || !expiry || Date.now() > parseInt(expiry, 10)) {
       router.push("/admin/login");
     }
   }, [router]);
@@ -51,14 +54,60 @@ function DashboardContent() {
       await deleteMovieAPI(id);
       const data = await getMoviesAPI();
       setMovies(data);
+      setSelectedMovies(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } catch (error) {
       console.error("Failed to delete movie:", error);
     }
   };
 
+  const handleBulkDelete = async () => {
+    const selectedIds = Array.from(selectedMovies);
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} movie(s)?`)) return;
+
+    setDeleting(true);
+    try {
+      for (const id of selectedIds) {
+        await deleteMovieAPI(id);
+      }
+      const data = await getMoviesAPI();
+      setMovies(data);
+      setSelectedMovies(new Set());
+    } catch (error) {
+      console.error("Failed to delete movies:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminTokenExpiry");
     router.push("/admin/login");
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedMovies.size === filteredMovies.length) {
+      setSelectedMovies(new Set());
+    } else {
+      setSelectedMovies(new Set(filteredMovies.map(m => m.id)));
+    }
+  };
+
+  const toggleSelectMovie = (id: string) => {
+    setSelectedMovies(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   const filteredMovies = movies.filter(
@@ -117,6 +166,22 @@ function DashboardContent() {
           </div>
         </div>
 
+        {selectedMovies.size > 0 && (
+          <div className="mb-6 p-4 bg-red-600/20 border border-red-600/30 rounded-xl flex items-center justify-between">
+            <span className="text-red-400 font-medium">
+              {selectedMovies.size} movie(s) selected
+            </span>
+            <button
+              onClick={handleBulkDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={18} />
+              {deleting ? "Deleting..." : "Delete Selected"}
+            </button>
+          </div>
+        )}
+
         {filteredMovies.length === 0 ? (
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-12 text-center">
             <Film size={48} className="mx-auto text-gray-600 mb-4" />
@@ -134,6 +199,18 @@ function DashboardContent() {
             <table className="w-full">
               <thead className="bg-white/5">
                 <tr>
+                  <th className="w-12 px-6 py-4 text-sm font-medium text-gray-400">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="p-1 hover:bg-white/10 rounded transition-colors"
+                    >
+                      {selectedMovies.size === filteredMovies.length && filteredMovies.length > 0 ? (
+                        <CheckSquare size={18} className="text-red-500" />
+                      ) : (
+                        <Square size={18} className="text-gray-500" />
+                      )}
+                    </button>
+                  </th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">Movie</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">Genre</th>
                   <th className="text-left px-6 py-4 text-sm font-medium text-gray-400">Duration</th>
@@ -143,7 +220,24 @@ function DashboardContent() {
               </thead>
               <tbody>
                 {filteredMovies.map((movie) => (
-                  <tr key={movie.id} className="border-t border-white/10 hover:bg-white/5 transition-colors">
+                  <tr
+                    key={movie.id}
+                    className={`border-t border-white/10 hover:bg-white/5 transition-colors ${
+                      selectedMovies.has(movie.id) ? "bg-red-600/5" : ""
+                    }`}
+                  >
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => toggleSelectMovie(movie.id)}
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                      >
+                        {selectedMovies.has(movie.id) ? (
+                          <CheckSquare size={18} className="text-red-500" />
+                        ) : (
+                          <Square size={18} className="text-gray-500" />
+                        )}
+                      </button>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-16 bg-linear-to-br from-red-600/30 to-red-700/20 rounded-lg flex items-center justify-center shrink-0">
