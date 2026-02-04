@@ -9,17 +9,12 @@ interface User {
   avatar?: string;
 }
 
-interface StoredUser extends User {
-  password: string;
-  createdAt: string;
-}
-
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  updateAvatar: (avatarDataUrl: string) => void;
+  updateAvatar: (avatarDataUrl: string) => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
   isInitialized: boolean;
@@ -42,29 +37,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initializeAuth = async () => {
       try {
         const token = localStorage.getItem("authToken");
-        const userData = localStorage.getItem("userData");
+        const tokenExpiry = localStorage.getItem("authTokenExpiry");
+        const userDataStr = localStorage.getItem("userData");
 
-        if (mounted) {
-          if (token && userData) {
-            try {
-              const parsedUser = JSON.parse(userData);
-              if (parsedUser.id && parsedUser.email) {
-                setUser(parsedUser);
-              } else {
-                localStorage.removeItem("authToken");
-                localStorage.removeItem("userData");
-              }
-            } catch (error) {
-              console.error("Failed to parse user data:", error);
-              localStorage.removeItem("authToken");
-              localStorage.removeItem("userData");
-            }
+        if (!token || !tokenExpiry || !userDataStr) {
+          if (mounted) {
+            setIsLoading(false);
+            setIsInitialized(true);
           }
-          setIsLoading(false);
-          setIsInitialized(true);
+          return;
+        }
+
+        if (Date.now() > parseInt(tokenExpiry, 10)) {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("authTokenExpiry");
+          localStorage.removeItem("userData");
+          if (mounted) {
+            setIsLoading(false);
+            setIsInitialized(true);
+          }
+          return;
+        }
+
+        try {
+          const userData = JSON.parse(userDataStr);
+          if (userData.id && userData.email) {
+            setUser(userData);
+          }
+        } catch {
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("authTokenExpiry");
+          localStorage.removeItem("userData");
         }
       } catch (error) {
         console.error("Failed to initialize auth:", error);
+      } finally {
         if (mounted) {
           setIsLoading(false);
           setIsInitialized(true);
@@ -79,121 +86,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    if (isLoading) return false;
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (isLoading) return { success: false, error: "Already loading" };
 
-    let isMounted = true;
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch("/api/auth/user-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (!isMounted) return false;
+      const data = await res.json();
 
-      const users: StoredUser[] = JSON.parse(localStorage.getItem("users") || "[]");
-      const existingUser = users.find((u) => u.email === email && u.password === password);
-
-      if (existingUser && isMounted) {
-        const userData = {
-          id: existingUser.id,
-          name: existingUser.name,
-          email: existingUser.email,
-          avatar: existingUser.avatar,
-        };
-
-        const token = `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        localStorage.setItem("authToken", token);
-        localStorage.setItem("userData", JSON.stringify(userData));
-        setUser(userData);
-        return true;
+      if (!res.ok) {
+        console.error("Login failed:", data.error);
+        return { success: false, error: data.error || "Login failed" };
       }
 
-      return false;
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("authTokenExpiry", String(data.expiry));
+      localStorage.setItem("userData", JSON.stringify(data.user));
+      setUser(data.user);
+      return { success: true };
     } catch (error) {
       console.error("Login error:", error);
-      return false;
+      return { success: false, error: "Network error. Please try again." };
     } finally {
-      if (isMounted) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    if (isLoading) return false;
+  const signup = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    if (isLoading) return { success: false, error: "Already loading" };
 
-    let isMounted = true;
     setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-      if (!isMounted) return false;
+      const data = await res.json();
 
-      const users: StoredUser[] = JSON.parse(localStorage.getItem("users") || "[]");
-      const existingUser = users.find((u) => u.email === email);
-
-      if (existingUser) {
-        return false;
+      if (!res.ok) {
+        console.error("Signup failed:", data.error || data);
+        return { success: false, error: data.error || "Signup failed" };
       }
 
-      const newUser = {
-        id: `user-${Date.now()}`,
-        name,
-        email,
-        password,
-        createdAt: new Date().toISOString(),
-      };
-
-      users.push(newUser);
-      localStorage.setItem("users", JSON.stringify(users));
-
-      const userData = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        avatar: undefined,
-      };
-
-      const token = `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("userData", JSON.stringify(userData));
-
-      if (isMounted) {
-        setUser(userData);
-      }
-      return true;
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("authTokenExpiry", String(data.expiry));
+      localStorage.setItem("userData", JSON.stringify(data.user));
+      setUser(data.user);
+      return { success: true };
     } catch (error) {
       console.error("Signup error:", error);
-      return false;
+      return { success: false, error: "Network error. Please try again." };
     } finally {
-      if (isMounted) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
   const logout = () => {
-    try {
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("userData");
-      setUser(null);
-    } catch (error) {
-      console.error("Logout error:", error);
-      setUser(null);
-    }
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authTokenExpiry");
+    localStorage.removeItem("userData");
+    setUser(null);
   };
 
-  const updateAvatar = (avatarDataUrl: string) => {
+  const updateAvatar = async (avatarDataUrl: string) => {
     if (!user) return;
 
-    const updatedUser = { ...user, avatar: avatarDataUrl || undefined };
-    setUser(updatedUser);
-
     try {
+      const updatedUser = { ...user, avatar: avatarDataUrl || undefined };
       localStorage.setItem("userData", JSON.stringify(updatedUser));
+      setUser(updatedUser);
     } catch (error) {
       console.error("Failed to save avatar:", error);
     }

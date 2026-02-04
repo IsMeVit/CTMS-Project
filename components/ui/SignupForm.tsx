@@ -88,15 +88,15 @@ export default function SignupForm() {
     }
 
     try {
-      const success = await signup(name, email, password);
-      
-      if (success) {
+      const result = await signup(name, email, password);
+
+      if (result.success) {
         setIsSuccess(true);
         setTimeout(() => {
           router.push("/home");
         }, 2000);
       } else {
-        setError("An account with this email already exists");
+        setError(result.error || "Signup failed. Please try again.");
       }
     } catch {
       setError("Signup failed. Please try again.");

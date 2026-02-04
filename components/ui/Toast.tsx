@@ -37,14 +37,21 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   useEffect(() => {
+    const timerMap = new Map<string, ReturnType<typeof setTimeout>>();
+
     toasts.forEach((toast) => {
-      if (toast.duration) {
+      if (toast.duration && !timerMap.has(toast.id)) {
         const timer = setTimeout(() => {
           removeToast(toast.id);
         }, toast.duration);
-        return () => clearTimeout(timer);
+        timerMap.set(toast.id, timer);
       }
     });
+
+    return () => {
+      timerMap.forEach((timer) => clearTimeout(timer));
+      timerMap.clear();
+    };
   }, [toasts]);
 
   const getToastStyles = (type: Toast["type"]) => {

@@ -59,37 +59,30 @@ function transformMovie(dbMovie: any): Movie {
 }
 
 export async function getMoviesAPI(): Promise<Movie[]> {
-  try {
-    const res = await fetch("/api/movies", { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch");
-    const dbMovies = await res.json();
-    return dbMovies.map(transformMovie);
-  } catch (error) {
-    console.error("API failed, falling back to localStorage:", error);
-    if (typeof window === "undefined") return [];
-    const movies = localStorage.getItem("adminMovies");
-    return movies ? JSON.parse(movies) : [];
+  const res = await fetch("/api/movies", { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch movies: ${res.status}`);
   }
+  const dbMovies = await res.json();
+  return dbMovies.map(transformMovie);
 }
 
 export async function getMovieAPI(id: string): Promise<Movie | null> {
-  try {
-    const res = await fetch(`/api/movies/${id}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    const dbMovie = await res.json();
-    return transformMovie(dbMovie);
-  } catch (error) {
-    console.error("API failed, falling back to localStorage:", error);
-    if (typeof window === "undefined") return null;
-    const movies = JSON.parse(localStorage.getItem("adminMovies") || "[]");
-    return movies.find((m: Movie) => m.id === id) || null;
-  }
+  const res = await fetch(`/api/movies/${id}`, { cache: "no-store" });
+  if (!res.ok) return null;
+  const dbMovie = await res.json();
+  return transformMovie(dbMovie);
 }
 
 export async function createMovieAPI(data: Partial<Movie>): Promise<Movie> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : "";
+
   const res = await fetch("/api/movies", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
 
@@ -103,43 +96,58 @@ export async function createMovieAPI(data: Partial<Movie>): Promise<Movie> {
 
 export async function updateMovieAPI(id: string, data: Partial<Movie>): Promise<Movie | null> {
   const numericId = id.replace("movie-", "");
+  const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : "";
+
   const res = await fetch(`/api/movies/${numericId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
 
   if (!res.ok) return null;
-
   const dbMovie = await res.json();
   return transformMovie(dbMovie);
 }
 
 export async function deleteMovieAPI(id: string): Promise<boolean> {
   const numericId = id.replace("movie-", "");
+  const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : "";
+
   const res = await fetch(`/api/movies/${numericId}`, {
     method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   return res.ok;
 }
 
 export async function getBookingsAPI(userId?: string): Promise<any[]> {
-  try {
-    const url = userId ? `/api/bookings?userId=${userId}` : "/api/bookings";
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch");
-    return await res.json();
-  } catch (error) {
-    console.error("API failed, falling back to localStorage:", error);
-    if (typeof window === "undefined") return [];
-    const bookings = localStorage.getItem("bookings");
-    const allBookings = bookings ? JSON.parse(bookings) : [];
-    if (userId) {
-      return allBookings.filter((b: any) => b.userId === userId);
-    }
-    return allBookings;
+  const url = userId ? `/api/bookings?userId=${userId}` : "/api/bookings";
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch bookings: ${res.status}`);
   }
+  return await res.json();
+}
+
+export async function getUserBookingsAPI(userId?: string): Promise<any[]> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : "";
+  const url = userId ? `/api/bookings/user?userId=${encodeURIComponent(userId)}` : "/api/bookings/user";
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch user bookings: ${res.status}`);
+  }
+  return await res.json();
 }
 
 export async function createBookingAPI(data: {
@@ -149,36 +157,44 @@ export async function createBookingAPI(data: {
   customerId?: number;
   totalPrice: number;
 }): Promise<any> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("adminToken") : "";
+
   const res = await fetch("/api/bookings", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create booking");
+    const error = await res.text();
+    throw new Error(`Failed to create booking: ${error}`);
   }
 
   return await res.json();
 }
 
 export async function getShowtimesAPI(movieId?: number): Promise<any[]> {
-  try {
-    const url = movieId ? `/api/showtimes?movieId=${movieId}` : "/api/showtimes";
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("Failed to fetch");
-    return await res.json();
-  } catch (error) {
-    console.error("Failed to fetch showtimes:", error);
-    return [];
+  const url = movieId ? `/api/showtimes?movieId=${movieId}` : "/api/showtimes";
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch showtimes: ${res.status}`);
   }
+  return await res.json();
 }
 
 export async function loginAPI(username: string, password: string): Promise<{ token: string } | null> {
-  if (username === "admin" && password === "admin123") {
-    const token = `admin-token-${Date.now()}`;
+  const adminUsername = process.env.ADMIN_USERNAME || "admin";
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+
+  if (username === adminUsername && password === adminPassword) {
+    const token = `admin-token-${Date.now()}-${crypto.randomUUID?.() || Math.random().toString(36).substring(2)}`;
+    const expiry = Date.now() + 3600000;
     if (typeof window !== "undefined") {
       localStorage.setItem("adminToken", token);
+      localStorage.setItem("adminTokenExpiry", String(expiry));
     }
     return { token };
   }

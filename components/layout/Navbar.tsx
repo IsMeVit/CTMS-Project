@@ -18,8 +18,15 @@ const Navbar: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("adminToken");
-    setIsAdmin(!!token);
+    let mounted = true;
+    const checkAdmin = () => {
+      const token = localStorage.getItem("adminToken");
+      if (mounted && token) {
+        setIsAdmin(true);
+      }
+    };
+    checkAdmin();
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
