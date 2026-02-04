@@ -126,14 +126,26 @@ Please arrive 15 minutes before showtime.
     }
   };
 
-  const fallbackCopyToClipboard = (text: string) => {
+  const fallbackCopyToClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        showToast("success", "Ticket details copied to clipboard!");
+        return;
+      }
+    } catch {
+      // Fall through to textarea method
+    }
+
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
     textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
+
     try {
       document.execCommand("copy");
       showToast("success", "Ticket details copied to clipboard!");
@@ -215,6 +227,12 @@ CTMS Cinemas Team
 
         if (mounted) {
           if (booking) {
+            if (booking.userId && user?.id && booking.userId !== user.id) {
+              setError("You do not have permission to view this ticket");
+              setRedirecting(true);
+              setTimeout(() => handleRedirect("profile", "access_denied"), 3000);
+              return;
+            }
             setTicketData({
               ...booking,
               cinemaName: "CTMS Cinemas Main Branch",
