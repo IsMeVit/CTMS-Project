@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Star,
 } from "lucide-react";
+import { getUserBookingsAPI } from "@/lib/api";
 
 interface Booking {
   reference: string;
@@ -104,13 +105,10 @@ function ProfileContent() {
       return;
     }
 
-    const loadBookings = () => {
+    const loadBookings = async () => {
       try {
-        const allBookings: Booking[] = JSON.parse(localStorage.getItem("bookings") || "[]");
-        if (Array.isArray(allBookings)) {
-          const userBookings = allBookings.filter((b) => b.userId === user?.id);
-          setBookings(userBookings);
-        }
+        const bookings = await getUserBookingsAPI(user?.id);
+        setBookings(bookings);
       } catch (error) {
         console.error("Failed to load bookings:", error);
         setBookings([]);
@@ -119,8 +117,7 @@ function ProfileContent() {
       }
     };
 
-    const timer = setTimeout(loadBookings, 100);
-    return () => clearTimeout(timer);
+    loadBookings();
   }, [isAuthenticated, isInitialized, router, searchParams, user?.id]);
 
   const handleLogout = () => {
