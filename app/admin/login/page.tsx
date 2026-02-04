@@ -89,9 +89,6 @@ export default function AdminLoginPage() {
           </Link>
         </div>
 
-        <div className="text-center mt-8 text-xs text-gray-600">
-          <p>Default credentials: admin / admin123</p>
-        </div>
       </div>
     </div>
   );
