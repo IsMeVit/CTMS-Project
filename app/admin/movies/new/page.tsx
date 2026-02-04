@@ -1,18 +1,45 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Upload, X, Plus, Trash2, Clock, Calendar, Armchair } from "lucide-react";
 import { createMovieAPI, defaultSeatConfig, defaultShowtimes, type SeatRow } from "@/lib/api";
+import { sanitizeString, validateURL } from "@/lib/sanitize";
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+async function validateFileType(file: File): Promise<boolean> {
+  const signatures: Record<string, number[]> = {
+    "image/jpeg": [0xff, 0xd8, 0xff],
+    "image/png": [0x89, 0x50, 0x4e, 0x47],
+    "image/gif": [0x47, 0x49, 0x46, 0x38],
+    "image/webp": [0x52, 0x49, 0x46, 0x46],
+  };
+
+  const buffer = await file.slice(0, 12).arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const headerHex = Array.from(bytes.slice(0, 4)).map(b => b.toString(16).padStart(2, "0")).join("");
+
+  for (const [type, sig] of Object.entries(signatures)) {
+    const sigHex = sig.map(b => b.toString(16).padStart(2, "0")).join("");
+    if (headerHex.startsWith(sigHex)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 export default function NewMoviePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -28,7 +55,8 @@ export default function NewMoviePage() {
 
   useEffect(() => {
     const token = localStorage.getItem("adminToken");
-    if (!token) {
+    const expiry = localStorage.getItem("adminTokenExpiry");
+    if (!token || !expiry || Date.now() > parseInt(expiry, 10)) {
       router.push("/admin/login");
     }
   }, [router]);
@@ -37,15 +65,23 @@ export default function NewMoviePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be less than 5MB");
+    if (file.size > MAX_FILE_SIZE) {
+      setErrors(prev => ({ ...prev, poster: "Image must be less than 5MB" }));
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      alert("File must be an image");
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setErrors(prev => ({ ...prev, poster: "File must be a valid image (JPEG, PNG, GIF, WebP)" }));
       return;
     }
+
+    const isValid = await validateFileType(file);
+    if (!isValid) {
+      setErrors(prev => ({ ...prev, poster: "File type validation failed" }));
+      return;
+    }
+
+    setErrors(prev => ({ ...prev, poster: "" }));
 
     setUploading(true);
     try {
@@ -55,10 +91,13 @@ export default function NewMoviePage() {
         setForm({ ...form, posterUrl: base64 });
         setPreviewUrl(base64);
       };
+      reader.onerror = () => {
+        setErrors(prev => ({ ...prev, poster: "Failed to read file" }));
+      };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error("Failed to read file:", error);
-      alert("Failed to upload image");
+      setErrors(prev => ({ ...prev, poster: "Failed to upload image" }));
     } finally {
       setUploading(false);
     }
@@ -111,13 +150,52 @@ export default function NewMoviePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
+
+    const newErrors: Record<string, string> = {};
+
+    const sanitizedTitle = sanitizeString(form.title);
+    if (!sanitizedTitle || sanitizedTitle.trim().length === 0) {
+      newErrors.title = "Movie title is required";
+    } else if (sanitizedTitle.length > 200) {
+      newErrors.title = "Title must be less than 200 characters";
+    }
+
+    if (form.duration < 1 || form.duration > 600) {
+      newErrors.duration = "Duration must be between 1 and 600 minutes";
+    }
+
+    if (form.rating < 0 || form.rating > 10) {
+      newErrors.rating = "Rating must be between 0 and 10";
+    }
+
+    if (form.releaseDate && form.endDate && new Date(form.endDate) < new Date(form.releaseDate)) {
+      newErrors.endDate = "End date must be after start date";
+    }
+
+    if (form.posterUrl && !form.posterUrl.startsWith("data:")) {
+      if (!validateURL(form.posterUrl)) {
+        newErrors.posterUrl = "Invalid poster URL format";
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await createMovieAPI(form);
+      await createMovieAPI({
+        ...form,
+        title: sanitizedTitle,
+        description: sanitizeString(form.description),
+      });
       router.push("/admin/dashboard");
-    } catch {
-      alert("An error occurred");
+    } catch (error) {
+      console.error("Failed to create movie:", error);
+      setErrors({ submit: "Failed to create movie. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -157,24 +235,31 @@ export default function NewMoviePage() {
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
+                className={`w-full bg-white/5 border ${errors.title ? "border-red-500" : "border-white/10"} rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors`}
                 placeholder="Movie title"
+                maxLength={200}
                 required
               />
+              {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors h-32 resize-none"
-                placeholder="Movie description"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Duration (min) *</label>
+                <input
+                  type="number"
+                  value={form.duration}
+                  onChange={(e) => setForm({ ...form, duration: parseInt(e.target.value) || 0 })}
+                  className={`w-full bg-white/5 border ${errors.duration ? "border-red-500" : "border-white/10"} rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors`}
+                  min="1"
+                  max="600"
+                  required
+                />
+                {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration}</p>}
+              </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">Movie Poster</label>
+              {errors.poster && <p className="text-red-500 text-sm mb-2">{errors.poster}</p>}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -258,10 +343,12 @@ export default function NewMoviePage() {
                   type="number"
                   value={form.duration}
                   onChange={(e) => setForm({ ...form, duration: parseInt(e.target.value) || 0 })}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
+                  className={`w-full bg-white/5 border ${errors.duration ? "border-red-500" : "border-white/10"} rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors`}
                   min="1"
+                  max="600"
                   required
                 />
+                {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration}</p>}
               </div>
             </div>
 
@@ -302,6 +389,7 @@ export default function NewMoviePage() {
                     onChange={(e) => setForm({ ...form, endDate: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
                   />
+                  {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>}
                 </div>
               </div>
 
@@ -412,6 +500,7 @@ export default function NewMoviePage() {
             </div>
 
             <div className="flex gap-4 pt-4 border-t border-white/10">
+              {errors.submit && <p className="text-red-500 text-sm w-full text-center mb-2">{errors.submit}</p>}
               <button
                 type="submit"
                 disabled={loading}
