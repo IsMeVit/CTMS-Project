@@ -1,5 +1,11 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { verifyAdminToken } from "@/lib/auth";
+
+function isValidId(id: string): boolean {
+  const num = parseInt(id, 10);
+  return !isNaN(num) && num > 0;
+}
 
 export async function GET(
   request: Request,
@@ -7,6 +13,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    if (!isValidId(id)) {
+      return NextResponse.json({ error: "Invalid movie ID" }, { status: 400 });
+    }
+
     const movie = await db.movie.findFirst({
       where: { movie_id: parseInt(id) },
       include: {
@@ -34,13 +45,23 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authCheck = await verifyAdminToken(request);
+    if (!authCheck.valid) {
+      return NextResponse.json({ error: authCheck.message }, { status: authCheck.status });
+    }
+
     const { id } = await params;
+
+    if (!isValidId(id)) {
+      return NextResponse.json({ error: "Invalid movie ID" }, { status: 400 });
+    }
+
     const body = await request.json();
 
     const movie = await db.movie.update({
       where: { movie_id: parseInt(id) },
       data: {
-        title: body.title,
+        title: body.title?.trim(),
         genre: body.genre,
         duration: body.duration,
         description: body.description,
@@ -63,7 +84,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authCheck = await verifyAdminToken(request);
+    if (!authCheck.valid) {
+      return NextResponse.json({ error: authCheck.message }, { status: authCheck.status });
+    }
+
     const { id } = await params;
+
+    if (!isValidId(id)) {
+      return NextResponse.json({ error: "Invalid movie ID" }, { status: 400 });
+    }
+
     await db.movie.delete({
       where: { movie_id: parseInt(id) },
     });
