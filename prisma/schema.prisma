@@ -24,6 +24,19 @@ model Movie {
   @@map("movie")
 }
 
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique @map("email")
+  name          String     @map("name")
+  password_hash String     @map("password_hash")
+  avatar_url    String?    @map("avatar_url")
+  created_at    DateTime   @default(now()) @map("created_at")
+  updated_at    DateTime   @updatedAt @map("updated_at")
+  tickets       Ticket[]
+
+  @@map("users")
+}
+
 model Hall {
   hall_id       Int        @id @default(autoincrement())
   hall_name     String     @map("hall_name")
@@ -90,6 +103,7 @@ model Ticket {
   showtime       Showtime   @relation(fields: [showtime_id], references: [showtime_id])
   seat           Seat       @relation(fields: [seat_id], references: [seat_id])
   customer       Customer?  @relation(fields: [customer_id], references: [customer_id])
+  user           User?      @relation(fields: [user_id], references: [id])
 
   @@map("ticket")
 }
